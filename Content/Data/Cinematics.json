@@ -1,0 +1,11 @@
+{
+	"_comment": "Shared cinematics that any mission can reference by id (missions can also define their own under \"cinematics\").",
+	"generic_victory": {
+		"letterbox": true,
+		"fade_in": 0.5,
+		"fade_out": 1.5,
+		"shots": [
+			{ "duration": 6, "from": [20, 40, 1600], "to": [24, 30, 2100], "look": [24, 20, 0], "title": "VICTORY" }
+		]
+	}
+}

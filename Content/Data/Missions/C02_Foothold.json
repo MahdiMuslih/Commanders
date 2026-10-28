@@ -1,0 +1,128 @@
+{
+	"id": "C02",
+	"title": "Foothold",
+	"subtitle": "Establish a base in the Valmont Valley",
+	"location": "Valmont Valley",
+	"date": "19 December 1958, 07:15",
+	"briefing": [
+		"Kessel held, Commander, and ten thousand civilians owe you their lives. But the Pact is pouring armour through the Valmont Valley - the only road west that can carry tanks in winter.",
+		"We are giving you a Mobile Construction Vehicle. Deploy it, build power, get a refinery working on the valley's ore fields and raise an army.",
+		"A Pact forward base has dug in at the head of the valley. Destroy it, and their armour has nowhere to refuel. There are two old oil derricks in the valley as well - an Engineer could put them to work for us."
+	],
+	"victory_text": "The Pact forward base is rubble. The Valmont Valley is in Concord hands.",
+
+	"map": {
+		"width": 64, "height": 56, "theme": "temperate", "seed": 7,
+		"rocks": [ [20, 18, 3, 11], [36, 28, 11, 2], [0, 22, 7, 2], [56, 30, 8, 2], [28, 0, 2, 6], [14, 0, 4, 3] ],
+		"trees": [ [2, 2, 8, 6], [30, 8, 6, 5], [8, 26, 6, 4], [44, 34, 7, 5], [24, 40, 5, 4], [58, 40, 6, 8], [34, 48, 6, 4] ],
+		"water": [ [26, 20, 5, 4] ],
+		"roads": [ [4, 48, 30, 1], [33, 20, 1, 29], [33, 20, 18, 1] ],
+		"random_trees": 0.02, "random_rocks": 0.004,
+		"clear": [ [0, 36, 26, 20], [42, 2, 22, 20] ],
+		"ore": [
+			{ "at": [17, 42], "radius": 3.5, "richness": 9 },
+			{ "at": [6, 33], "radius": 2.5, "richness": 8 },
+			{ "at": [40, 9], "radius": 3, "richness": 9 },
+			{ "at": [32, 33], "radius": 3, "richness": 12, "gems": true }
+		]
+	},
+
+	"teams": [
+		{ "name": "Concord", "faction": "concord", "player": true, "alliance": 0, "credits": 5000,
+		  "allowed": ["power", "refinery", "barracks", "factory", "radar", "pillbox", "sentinel", "rifle", "rocket", "engineer", "harvester", "jeep", "lancer", "warden"] },
+		{ "name": "Pact Forward Base", "faction": "pact", "ai": true, "alliance": 1, "credits": 3000, "difficulty": "easy",
+		  "allowed": ["power", "refinery", "barracks", "factory", "bunker", "rifle", "rocket", "flamer", "harvester", "wolf", "bear"],
+		  "ai_config": { "first_attack": 330, "attack_interval": 200 } },
+		{ "name": "Civilians", "faction": "neutral", "neutral": true, "alliance": 7, "color": "grey" }
+	],
+
+	"entities": [
+		{ "type": "mcv", "team": 0, "at": [9, 50], "tag": "Column", "yaw": 270 },
+		{ "type": "rifle", "team": 0, "at": [5, 52], "tag": "Column" },
+		{ "type": "rifle", "team": 0, "at": [6, 52], "tag": "Column" },
+		{ "type": "rifle", "team": 0, "at": [7, 53], "tag": "Column" },
+		{ "type": "rifle", "team": 0, "at": [12, 53], "tag": "Column" },
+		{ "type": "rocket", "team": 0, "at": [13, 52], "tag": "Column" },
+		{ "type": "rocket", "team": 0, "at": [14, 53], "tag": "Column" },
+		{ "type": "lancer", "team": 0, "at": [11, 54], "tag": "Column", "yaw": 270 },
+		{ "type": "lancer", "team": 0, "at": [15, 54], "tag": "Column", "yaw": 270 },
+
+		{ "type": "conyard", "team": 1, "at": [50, 5] },
+		{ "type": "power", "team": 1, "at": [54, 5] },
+		{ "type": "power", "team": 1, "at": [57, 5] },
+		{ "type": "refinery", "team": 1, "at": [45, 9] },
+		{ "type": "barracks", "team": 1, "at": [51, 10] },
+		{ "type": "factory", "team": 1, "at": [55, 9] },
+		{ "type": "bunker", "team": 1, "at": [44, 15] },
+		{ "type": "bunker", "team": 1, "at": [50, 16] },
+		{ "type": "harvester", "team": 1, "at": [46, 13] },
+		{ "type": "rifle", "team": 1, "at": [47, 17] },
+		{ "type": "rifle", "team": 1, "at": [48, 17] },
+		{ "type": "rifle", "team": 1, "at": [53, 17] },
+		{ "type": "flamer", "team": 1, "at": [52, 17] },
+		{ "type": "bear", "team": 1, "at": [49, 19], "yaw": 180 },
+		{ "type": "wolf", "team": 1, "at": [40, 22] },
+
+		{ "type": "derrick", "team": 2, "at": [27, 30], "tag": "Derrick" },
+		{ "type": "derrick", "team": 2, "at": [41, 40], "tag": "Derrick" },
+		{ "type": "farmhouse", "team": 2, "at": [36, 44] },
+		{ "type": "farmhouse", "team": 2, "at": [10, 12] }
+	],
+
+	"camera": [11, 47],
+
+	"objectives": [
+		{ "id": "deploy", "type": "build", "entity": "conyard", "count": 1, "text": "Deploy the MCV (select it, press D) to found your base." },
+		{ "id": "destroy", "type": "destroy_all", "text": "Destroy the Pact forward base." },
+		{ "id": "derrick", "type": "capture", "tag": "Derrick", "primary": false, "text": "Capture an Oil Derrick with an Engineer." }
+	],
+
+	"intro_cinematic": "intro",
+
+	"triggers": [
+		{ "id": "deployed", "when": { "type": "built", "team": "player", "entity": "conyard" }, "actions": [
+			{ "type": "dialogue", "lines": [
+				{ "speaker": "Gen. Adrian Hale", "color": [0.95, 0.8, 0.45], "text": "Base established. Build Power Plants first - nothing runs without power. Then an Ore Refinery." },
+				{ "speaker": "Lt. Sarah Okafor", "color": [0.4, 0.75, 1.0], "text": "Click a structure in the BUILD tab. When it reads READY, click it again and place it next to the Construction Yard." }
+			] }
+		] },
+		{ "id": "refinery", "when": { "type": "built", "team": "player", "entity": "refinery" }, "actions": [
+			{ "type": "dialogue", "lines": [ { "speaker": "Lt. Sarah Okafor", "color": [0.4, 0.75, 1.0], "text": "Harvester is rolling. Every load is credits in the bank. Those blue gems in the middle of the valley are worth double." } ] }
+		] },
+		{ "id": "factory", "when": { "type": "built", "team": "player", "entity": "factory" }, "actions": [
+			{ "type": "dialogue", "lines": [ { "speaker": "Gen. Adrian Hale", "color": [0.95, 0.8, 0.45], "text": "War Factory online. Lancers are quick, Wardens can take a beating. Their Bears can take more - mass your armour." } ] }
+		] },
+		{ "id": "scouts", "when": { "type": "time", "seconds": 200 }, "actions": [
+			{ "type": "dialogue", "lines": [ { "speaker": "Lt. Sarah Okafor", "color": [0.4, 0.75, 1.0], "text": "Pact scout cars in the valley! Expect a probing attack." } ] },
+			{ "type": "spawn", "team": 1, "units": ["wolf", "wolf", "rifle", "rifle", "rifle"], "at": [34, 22], "attack_move": [12, 44] }
+		] },
+		{ "id": "spot_base", "when": { "type": "area", "team": "player", "area": [40, 0, 24, 22] }, "actions": [
+			{ "type": "dialogue", "lines": [ { "speaker": "Capt. Jonah Reyes", "color": [0.5, 1.0, 0.6], "text": "That's their Construction Yard in the middle. Knock it down and they can't rebuild." } ] }
+		] },
+		{ "id": "intercept", "when": { "type": "count_below", "team": 1, "what": "buildings", "count": 4 }, "actions": [
+			{ "type": "dialogue", "lines": [
+				{ "speaker": "Pact Officer (intercept)", "color": [1.0, 0.45, 0.4], "text": "Vanguard to Iron Command! We cannot hold the valley! Requesting Aurora support!" },
+				{ "speaker": "Col. Gregor Strel (intercept)", "color": [0.75, 0.75, 0.8], "text": "Denied. Aurora is not ready. You will hold, or you will not come home." },
+				{ "speaker": "Lt. Sarah Okafor", "color": [0.4, 0.75, 1.0], "text": "There it is again, Commander. Aurora." }
+			] }
+		] }
+	],
+
+	"cinematics": {
+		"intro": {
+			"letterbox": true, "fade_in": 2.0, "fade_out": 1.0,
+			"shots": [
+				{ "duration": 7, "from": [20, 56, 1600], "to": [14, 52, 900], "look": [10, 46, 0], "fov": 50, "title": "CHAPTER TWO", "title_sub": "Foothold" },
+				{ "duration": 8, "from": [22, 40, 700], "to": [40, 30, 900], "look": [30, 32, 0], "look_to": [50, 12, 0], "fov": 48,
+				  "speaker": "Gen. Adrian Hale", "text": "The Valmont Valley, Commander. Every Pact tank heading west has to come through here." },
+				{ "duration": 7, "orbit": { "center": [51, 10], "radius": 9, "height": 900, "from": 120, "to": 170 }, "fov": 45,
+				  "speaker": "Gen. Adrian Hale", "text": "They've dug in a forward base at the head of the valley. Build up, then burn it out." },
+				{ "duration": 6, "from": [10, 56, 500], "to": [10, 52, 600], "look": [10, 46, 0], "fov": 45,
+				  "speaker": "Lt. Sarah Okafor", "text": "Convoy entering the valley now." }
+			],
+			"events": [
+				{ "t": 1.0, "action": { "type": "order", "tag": "Column", "move_to": [10, 46] } }
+			]
+		}
+	}
+}

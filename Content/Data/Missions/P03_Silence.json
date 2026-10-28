@@ -1,0 +1,160 @@
+{
+	"id": "P03",
+	"title": "Silence",
+	"subtitle": "Destroy three Concord relay towers",
+	"location": "Lorne Highlands",
+	"date": "23 December 1958, 18:20",
+	"briefing": [
+		"Commander, the Concord sees everything we do. Three radio relay towers in the Lorne Highlands feed their spotters' reports straight to Geneva.",
+		"Destroy all three before Concord reinforcements reach the highlands - fifteen minutes, by our best estimate. Your forward base is already established in the south-west.",
+		"Thunder launchers are now at your disposal. Use their range against the towers' defences. And beware - the Concord has begun flying Hawk gunships."
+	],
+	"victory_text": "The highlands are silent. The Concord is blind.",
+	"defeat_text": "Concord reinforcements have reached the highlands. The operation has failed.",
+
+	"map": {
+		"width": 64, "height": 64, "theme": "dusk", "seed": 1223,
+		"rocks": [ [20, 20, 2, 14], [40, 36, 14, 2], [44, 18, 2, 8], [0, 36, 10, 2], [24, 50, 2, 10], [10, 14, 6, 2] ],
+		"trees": [ [0, 0, 14, 10], [16, 36, 6, 6], [46, 42, 10, 8], [28, 16, 8, 6], [56, 50, 8, 8], [36, 54, 8, 6] ],
+		"water": [ [4, 24, 8, 6] ],
+		"roads": [ [8, 44, 50, 1], [30, 10, 1, 35], [30, 10, 30, 1] ],
+		"random_trees": 0.03, "random_rocks": 0.004,
+		"clear": [ [0, 42, 26, 22], [44, 0, 20, 18], [26, 2, 10, 10], [52, 26, 12, 10], [32, 36, 10, 8] ],
+		"ore": [
+			{ "at": [16, 58], "radius": 3, "richness": 9 },
+			{ "at": [20, 46], "radius": 2.5, "richness": 9 },
+			{ "at": [34, 28], "radius": 3, "richness": 12, "gems": true },
+			{ "at": [44, 6], "radius": 2.5, "richness": 9 }
+		]
+	},
+
+	"teams": [
+		{ "name": "Iron Pact", "faction": "pact", "player": true, "alliance": 0, "credits": 4000,
+		  "allowed": ["power", "refinery", "barracks", "factory", "radar", "bunker", "flakcannon", "rifle", "rocket", "flamer", "engineer", "harvester", "wolf", "bear", "thunder", "flaktruck"] },
+		{ "name": "Concord Highland Command", "faction": "concord", "ai": true, "alliance": 1, "credits": 6000, "difficulty": "normal",
+		  "allowed": ["power", "refinery", "barracks", "factory", "radar", "helipad", "pillbox", "sentinel", "skyguard", "rifle", "rocket", "engineer", "harvester", "jeep", "lancer", "warden", "longbow", "hawk"],
+		  "ai_config": { "first_attack": 260, "attack_interval": 160, "attack_size": 6 } }
+	],
+
+	"entities": [
+		{ "type": "conyard", "team": 0, "at": [6, 52] },
+		{ "type": "power", "team": 0, "at": [10, 52] },
+		{ "type": "power", "team": 0, "at": [10, 55] },
+		{ "type": "refinery", "team": 0, "at": [4, 46] },
+		{ "type": "barracks", "team": 0, "at": [13, 48] },
+		{ "type": "harvester", "team": 0, "at": [5, 50] },
+		{ "type": "bear", "team": 0, "at": [16, 42], "yaw": 0 },
+		{ "type": "bear", "team": 0, "at": [18, 42], "yaw": 0 },
+		{ "type": "wolf", "team": 0, "at": [20, 43], "yaw": 0 },
+		{ "type": "thunder", "team": 0, "at": [14, 45], "yaw": 0 },
+		{ "type": "rifle", "team": 0, "at": [15, 40] },
+		{ "type": "rifle", "team": 0, "at": [16, 40] },
+		{ "type": "rifle", "team": 0, "at": [17, 40] },
+		{ "type": "rifle", "team": 0, "at": [18, 40] },
+		{ "type": "flamer", "team": 0, "at": [19, 40] },
+		{ "type": "flamer", "team": 0, "at": [20, 40] },
+		{ "type": "rocket", "team": 0, "at": [15, 39] },
+		{ "type": "rocket", "team": 0, "at": [16, 39] },
+
+		{ "type": "commtower", "team": 1, "at": [30, 5], "tag": "Tower1" },
+		{ "type": "pillbox", "team": 1, "at": [28, 8] },
+		{ "type": "sentinel", "team": 1, "at": [32, 8] },
+		{ "type": "rifle", "team": 1, "at": [29, 9] },
+		{ "type": "rifle", "team": 1, "at": [31, 9] },
+		{ "type": "rocket", "team": 1, "at": [30, 9] },
+
+		{ "type": "commtower", "team": 1, "at": [58, 30], "tag": "Tower2" },
+		{ "type": "sentinel", "team": 1, "at": [56, 28] },
+		{ "type": "pillbox", "team": 1, "at": [60, 32] },
+		{ "type": "lancer", "team": 1, "at": [55, 31], "yaw": 180 },
+		{ "type": "lancer", "team": 1, "at": [57, 33], "yaw": 180 },
+
+		{ "type": "commtower", "team": 1, "at": [37, 40], "tag": "Tower3" },
+		{ "type": "pillbox", "team": 1, "at": [35, 38] },
+		{ "type": "pillbox", "team": 1, "at": [39, 38] },
+		{ "type": "warden", "team": 1, "at": [37, 42], "yaw": 180 },
+		{ "type": "rifle", "team": 1, "at": [36, 37] },
+		{ "type": "rifle", "team": 1, "at": [38, 37] },
+
+		{ "type": "conyard", "team": 1, "at": [52, 3] },
+		{ "type": "power", "team": 1, "at": [56, 3] },
+		{ "type": "power", "team": 1, "at": [59, 3] },
+		{ "type": "refinery", "team": 1, "at": [47, 7] },
+		{ "type": "barracks", "team": 1, "at": [55, 7] },
+		{ "type": "factory", "team": 1, "at": [58, 7] },
+		{ "type": "radar", "team": 1, "at": [52, 8] },
+		{ "type": "helipad", "team": 1, "at": [56, 12] },
+		{ "type": "harvester", "team": 1, "at": [48, 11] },
+		{ "type": "pillbox", "team": 1, "at": [50, 15] },
+		{ "type": "sentinel", "team": 1, "at": [55, 16] },
+		{ "type": "skyguard", "team": 1, "at": [53, 13] },
+		{ "type": "warden", "team": 1, "at": [52, 17], "yaw": 180 },
+		{ "type": "lancer", "team": 1, "at": [57, 17], "yaw": 180 }
+	],
+
+	"camera": [14, 46],
+
+	"objectives": [
+		{ "id": "t1", "type": "destroy", "tag": "Tower1", "text": "Destroy the northern relay tower." },
+		{ "id": "t2", "type": "destroy", "tag": "Tower2", "text": "Destroy the eastern relay tower." },
+		{ "id": "t3", "type": "destroy", "tag": "Tower3", "text": "Destroy the central relay tower." },
+		{ "id": "base", "type": "destroy_all", "primary": false, "text": "Destroy Concord Highland Command." }
+	],
+
+	"intro_cinematic": "intro",
+	"outro_cinematic": "outro",
+
+	"on_start": [
+		{ "type": "timer", "name": "deadline", "seconds": 900, "label": "Concord reinforcements" },
+		{ "type": "dialogue", "lines": [
+			{ "speaker": "Marshal Katya Volkova", "color": [1.0, 0.3, 0.25], "text": "Fifteen minutes, Commander. Build a War Factory and Thunder launchers - their range will crack those towers' guards open." }
+		] }
+	],
+
+	"triggers": [
+		{ "id": "deadline", "when": { "type": "timer", "name": "deadline" }, "actions": [
+			{ "type": "defeat", "reason": "Concord reinforcements have reached the highlands. The relay network survives." }
+		] },
+		{ "id": "d1", "when": { "type": "destroyed", "tag": "Tower1" }, "actions": [
+			{ "type": "dialogue", "lines": [ { "speaker": "Commissar Lev Orlov", "color": [1.0, 0.5, 0.45], "text": "Northern tower is down. The Concord just lost an eye." } ] }
+		] },
+		{ "id": "d2", "when": { "type": "destroyed", "tag": "Tower2" }, "actions": [
+			{ "type": "dialogue", "lines": [ { "speaker": "Commissar Lev Orlov", "color": [1.0, 0.5, 0.45], "text": "Eastern tower destroyed. Their signals are breaking up." } ] }
+		] },
+		{ "id": "d3", "when": { "type": "destroyed", "tag": "Tower3" }, "actions": [
+			{ "type": "dialogue", "lines": [ { "speaker": "Commissar Lev Orlov", "color": [1.0, 0.5, 0.45], "text": "Central tower gone. Well done, Comrade." } ] }
+		] },
+		{ "id": "hawks", "when": { "type": "time", "seconds": 330 }, "actions": [
+			{ "type": "spawn", "team": 1, "units": ["hawk", "hawk"], "at": [60, 1], "attack_move": [10, 52] },
+			{ "type": "dialogue", "lines": [ { "speaker": "Commissar Lev Orlov", "color": [1.0, 0.5, 0.45], "text": "Concord gunships! Build Flak Cannons - a Radar Dome first if we lack one." } ] }
+		] },
+		{ "id": "strel", "when": { "type": "time", "seconds": 480 }, "actions": [
+			{ "type": "dialogue", "lines": [
+				{ "speaker": "Col. Gregor Strel", "color": [0.75, 0.75, 0.8], "text": "Marshal. By order of the Premier, the Aurora Guard assumes command of all forces east of the Varn." },
+				{ "speaker": "Marshal Katya Volkova", "color": [1.0, 0.3, 0.25], "text": "My soldiers are fighting a war, Colonel. Take your Guard and your secrets off my channel." }
+			] }
+		] }
+	],
+
+	"cinematics": {
+		"intro": {
+			"letterbox": true, "fade_in": 2.0, "fade_out": 1.0,
+			"shots": [
+				{ "duration": 7, "from": [10, 64, 1300], "to": [14, 56, 900], "look": [12, 48, 0], "fov": 50, "title": "CHAPTER THREE", "title_sub": "Silence" },
+				{ "duration": 6, "orbit": { "center": [30, 5], "radius": 5, "height": 600, "from": 60, "to": 110 }, "fov": 45,
+				  "speaker": "Marshal Katya Volkova", "text": "The first tower, on the northern ridge." },
+				{ "duration": 6, "orbit": { "center": [58, 30], "radius": 5, "height": 600, "from": 160, "to": 210 }, "fov": 45,
+				  "speaker": "Marshal Katya Volkova", "text": "The second, guarding the eastern road." },
+				{ "duration": 7, "orbit": { "center": [37, 40], "radius": 5, "height": 600, "from": 220, "to": 270 }, "fov": 45,
+				  "speaker": "Marshal Katya Volkova", "text": "And the third, right on your doorstep. Silence them all, Commander." }
+			]
+		},
+		"outro": {
+			"letterbox": true, "fade_in": 1.0, "fade_out": 2.5,
+			"shots": [
+				{ "duration": 9, "from": [14, 50, 900], "to": [24, 40, 1500], "look": [37, 40, 0], "fov": 48,
+				  "speaker": "Marshal Katya Volkova", "text": "Good work. And Commander... Strel's Guard has taken over a research site in the north. Your next orders come from me, and me alone." }
+			]
+		}
+	}
+}

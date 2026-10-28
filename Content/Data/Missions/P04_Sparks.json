@@ -1,0 +1,154 @@
+{
+	"id": "P04",
+	"title": "Sparks",
+	"subtitle": "Defend the Aurora Assembly Site",
+	"location": "Karst Plateau",
+	"date": "27 December 1958, 13:00",
+	"briefing": [
+		"The Premier has finally told the Marshal what Aurora is: a weather engine. Its heart is being assembled at a site on the Karst Plateau, and it needs fifteen more minutes of uninterrupted work.",
+		"The Concord has learned of the site. Their raiders and Hawk gunships are already on the way. Your base surrounds the Assembly Site - hold it until the core is sealed.",
+		"Doctor Ilse Varga, the project's chief scientist, is on site. She is a civilian. Keep her out of the fighting. Flak Cannons and Vulture gunships have been released to you."
+	],
+	"victory_text": "The Aurora core is sealed. Colonel Strel's convoy is already moving it north.",
+
+	"map": {
+		"width": 64, "height": 56, "theme": "winter", "seed": 1227,
+		"rocks": [ [28, 0, 2, 14], [28, 40, 2, 16], [40, 20, 2, 16], [0, 44, 10, 2], [50, 0, 14, 2] ],
+		"trees": [ [0, 0, 10, 8], [32, 4, 8, 8], [32, 44, 10, 8], [44, 40, 8, 10], [0, 48, 8, 8] ],
+		"water": [ [34, 24, 4, 6] ],
+		"roads": [ [10, 27, 54, 1], [22, 0, 1, 56] ],
+		"random_trees": 0.025,
+		"clear": [ [0, 14, 28, 28], [46, 14, 18, 26] ],
+		"ore": [
+			{ "at": [4, 40], "radius": 2.5, "richness": 9 },
+			{ "at": [16, 46], "radius": 3, "richness": 9 },
+			{ "at": [34, 16], "radius": 3, "richness": 12, "gems": true },
+			{ "at": [56, 44], "radius": 3, "richness": 9 }
+		]
+	},
+
+	"teams": [
+		{ "name": "Iron Pact", "faction": "pact", "player": true, "alliance": 0, "credits": 4500,
+		  "allowed": ["power", "refinery", "barracks", "factory", "radar", "helipad", "bunker", "flakcannon", "rifle", "rocket", "flamer", "engineer", "harvester", "wolf", "bear", "thunder", "flaktruck", "vulture"] },
+		{ "name": "Concord Raiders", "faction": "concord", "ai": true, "alliance": 1, "credits": 7000, "difficulty": "normal",
+		  "ai_config": { "first_attack": 200, "attack_interval": 140, "attack_size": 6 } },
+		{ "name": "Research Staff", "faction": "neutral", "neutral": true, "alliance": 7, "color": [0.8, 0.8, 0.85] }
+	],
+
+	"entities": [
+		{ "type": "auroracore", "team": 0, "at": [12, 21], "tag": "Core" },
+		{ "type": "conyard", "team": 0, "at": [5, 29] },
+		{ "type": "power", "team": 0, "at": [5, 18] },
+		{ "type": "power", "team": 0, "at": [8, 18] },
+		{ "type": "power", "team": 0, "at": [5, 24] },
+		{ "type": "refinery", "team": 0, "at": [4, 35] },
+		{ "type": "barracks", "team": 0, "at": [16, 30] },
+		{ "type": "factory", "team": 0, "at": [10, 32] },
+		{ "type": "radar", "team": 0, "at": [18, 22] },
+		{ "type": "harvester", "team": 0, "at": [5, 39] },
+		{ "type": "flakcannon", "team": 0, "at": [16, 19] },
+		{ "type": "bunker", "team": 0, "at": [24, 22] },
+		{ "type": "bunker", "team": 0, "at": [24, 31] },
+		{ "type": "bear", "team": 0, "at": [25, 25], "yaw": 0 },
+		{ "type": "bear", "team": 0, "at": [25, 29], "yaw": 0 },
+		{ "type": "thunder", "team": 0, "at": [19, 27], "yaw": 0 },
+		{ "type": "rifle", "team": 0, "at": [23, 25] },
+		{ "type": "rifle", "team": 0, "at": [23, 26] },
+		{ "type": "rifle", "team": 0, "at": [23, 28] },
+		{ "type": "rifle", "team": 0, "at": [23, 29] },
+		{ "type": "rocket", "team": 0, "at": [21, 25] },
+		{ "type": "rocket", "team": 0, "at": [21, 29] },
+		{ "type": "scientist", "team": 2, "at": [15, 25], "tag": "Varga" },
+
+		{ "type": "conyard", "team": 1, "at": [54, 20] },
+		{ "type": "power", "team": 1, "at": [58, 20] },
+		{ "type": "power", "team": 1, "at": [61, 20] },
+		{ "type": "power", "team": 1, "at": [58, 23] },
+		{ "type": "refinery", "team": 1, "at": [50, 30] },
+		{ "type": "barracks", "team": 1, "at": [54, 25] },
+		{ "type": "factory", "team": 1, "at": [57, 27] },
+		{ "type": "radar", "team": 1, "at": [61, 24] },
+		{ "type": "helipad", "team": 1, "at": [61, 31] },
+		{ "type": "harvester", "team": 1, "at": [51, 34] },
+		{ "type": "sentinel", "team": 1, "at": [48, 22] },
+		{ "type": "pillbox", "team": 1, "at": [48, 28] },
+		{ "type": "skyguard", "team": 1, "at": [52, 36] },
+		{ "type": "warden", "team": 1, "at": [46, 25], "yaw": 180 },
+		{ "type": "lancer", "team": 1, "at": [46, 29], "yaw": 180 }
+	],
+
+	"camera": [16, 26],
+
+	"objectives": [
+		{ "id": "hold", "type": "survive", "seconds": 900, "text": "Defend the Assembly Site until the Aurora core is sealed." },
+		{ "id": "core", "type": "protect", "tag": "Core", "text": "The Aurora Assembly Site must not be destroyed.", "fail_text": "The Aurora Assembly Site has been destroyed." },
+		{ "id": "raiders", "type": "destroy_all", "primary": false, "text": "Wipe out the Concord raider base." }
+	],
+
+	"intro_cinematic": "intro",
+	"outro_cinematic": "outro",
+
+	"on_start": [
+		{ "type": "timer", "name": "seal", "seconds": 900, "label": "Core sealed in" },
+		{ "type": "dialogue", "lines": [
+			{ "speaker": "Marshal Katya Volkova", "color": [1.0, 0.3, 0.25], "text": "Fifteen minutes. The Concord will come from the east, and from the air. Build flak." }
+		] }
+	],
+
+	"triggers": [
+		{ "id": "raid1", "when": { "type": "time", "seconds": 110 }, "actions": [
+			{ "type": "spawn", "team": 1, "units": ["lancer", "lancer", "lancer", "jeep", "rifle", "rifle", "rifle", "rifle"], "at": [63, 27], "attack_move": [14, 23] }
+		] },
+		{ "id": "air1", "when": { "type": "time", "seconds": 230 }, "actions": [
+			{ "type": "spawn", "team": 1, "units": ["hawk", "hawk", "hawk"], "at": [63, 8], "attack_move": [13, 22] },
+			{ "type": "dialogue", "lines": [ { "speaker": "Commissar Lev Orlov", "color": [1.0, 0.5, 0.45], "text": "Hawk gunships, three of them! Flak, now!" } ] }
+		] },
+		{ "id": "varga", "when": { "type": "time", "seconds": 300 }, "actions": [
+			{ "type": "dialogue", "lines": [
+				{ "speaker": "Dr. Ilse Varga", "color": [0.85, 0.85, 1.0], "text": "Commander. Do you know what you are guarding? They told me Aurora would end droughts. They never asked me how to aim it at a city." },
+				{ "speaker": "Col. Gregor Strel", "color": [0.75, 0.75, 0.8], "text": "Doctor. Back to work. Commander - you will forget this conversation." },
+				{ "speaker": "Marshal Katya Volkova", "color": [1.0, 0.3, 0.25], "text": "...Hold the site, Commander. We will talk later." }
+			] }
+		] },
+		{ "id": "raid2", "when": { "type": "time", "seconds": 420 }, "actions": [
+			{ "type": "spawn", "team": 1, "units": ["warden", "warden", "warden", "longbow", "longbow", "rocket", "rocket", "rocket", "rocket"], "at": [60, 54], "attack_move": [14, 24] },
+			{ "type": "dialogue", "lines": [ { "speaker": "Commissar Lev Orlov", "color": [1.0, 0.5, 0.45], "text": "Heavy column from the south-east! Artillery with them!" } ] }
+		] },
+		{ "id": "raid3", "when": { "type": "time", "seconds": 600 }, "actions": [
+			{ "type": "spawn", "team": 1, "units": ["ranger", "ranger", "ranger", "rifle", "rifle", "rifle", "rifle"], "at": [20, 1], "attack_move": [14, 22] },
+			{ "type": "spawn", "team": 1, "units": ["hawk", "hawk"], "at": [63, 1], "attack_move": [10, 30] },
+			{ "type": "dialogue", "lines": [ { "speaker": "Commissar Lev Orlov", "color": [1.0, 0.5, 0.45], "text": "Concord Rangers coming over the northern ridge!" } ] }
+		] },
+		{ "id": "raid4", "when": { "type": "time", "seconds": 720 }, "actions": [
+			{ "type": "spawn", "team": 1, "units": ["warden", "warden", "lancer", "lancer", "lancer", "lancer", "skytrack"], "at": [63, 27], "attack_move": [14, 23] }
+		] },
+		{ "id": "last_minute", "when": { "type": "time", "seconds": 840 }, "actions": [
+			{ "type": "dialogue", "lines": [ { "speaker": "Dr. Ilse Varga", "color": [0.85, 0.85, 1.0], "text": "One minute... the core is stabilising. God forgive me." } ] }
+		] },
+		{ "id": "core_hit", "when": { "type": "damaged", "tag": "Core", "below": 0.6 }, "actions": [
+			{ "type": "dialogue", "lines": [ { "speaker": "Col. Gregor Strel", "color": [0.75, 0.75, 0.8], "text": "The Assembly Site is taking damage! If that core is lost, Commander, you will answer to the Premier personally." } ] }
+		] }
+	],
+
+	"cinematics": {
+		"intro": {
+			"letterbox": true, "fade_in": 2.0, "fade_out": 1.0,
+			"shots": [
+				{ "duration": 7, "orbit": { "center": [13, 22], "radius": 6, "height": 700, "from": 0, "to": 60 }, "fov": 50, "title": "CHAPTER FOUR", "title_sub": "Sparks" },
+				{ "duration": 8, "from": [15, 30, 260], "to": [15, 28, 300], "look": [15, 25, 60], "fov": 40,
+				  "speaker": "Dr. Ilse Varga", "text": "The containment field must stay perfectly stable while the core seals. Any shock - an explosion, a power cut - and we start again." },
+				{ "duration": 7, "from": [40, 28, 900], "to": [50, 28, 1000], "look": [56, 24, 0], "fov": 46,
+				  "speaker": "Marshal Katya Volkova", "text": "The Concord raiders are here, east of the river. They know exactly what this place is." }
+			]
+		},
+		"outro": {
+			"letterbox": true, "fade_in": 1.0, "fade_out": 2.5,
+			"shots": [
+				{ "duration": 8, "orbit": { "center": [13, 22], "radius": 7, "height": 800, "from": 120, "to": 180 }, "fov": 48,
+				  "speaker": "Col. Gregor Strel", "text": "The core is sealed. My Guard will escort it, and the Doctor, to Mount Belov. Your part is finished, Commander." },
+				{ "duration": 8, "from": [15, 32, 300], "to": [15, 30, 400], "look": [15, 25, 60], "fov": 40,
+				  "speaker": "Marshal Katya Volkova", "text": "Commander... I have served the Pact for twenty years. Today is the first time I have been afraid of what we are building." }
+			]
+		}
+	}
+}

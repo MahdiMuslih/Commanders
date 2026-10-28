@@ -1,0 +1,38 @@
+{
+	"campaigns": [
+		{
+			"id": "concord",
+			"name": "Operation Thaw",
+			"faction": "concord",
+			"color": [0.12, 0.35, 0.9],
+			"tagline": "The Western Concord campaign",
+			"synopsis": "Winter, 1958. Without warning the Iron Pact has crossed the Varn River, and its armies bring unnatural storms with them. As a newly promoted Concord field commander, you must hold the line, uncover the secret behind the 'Iron Winter', and destroy it before it buries Europe in ice.",
+			"epilogue": "The Aurora Lance fell at 04:12 on the morning of the solstice. Within the hour the unnatural snows began to melt from the Varn to the sea. Dr. Ilse Varga's testimony at Geneva brought down Premier Vasko's government before spring. General Hale retired in April; his final dispatch mentioned you in a single line: 'They held when holding was impossible.' The Iron Winter is over. But somewhere in the frozen east, Marshal Katya Volkova has never been found...",
+			"missions": [
+				{ "id": "C01", "file": "Missions/C01_Ashfall.json" },
+				{ "id": "C02", "file": "Missions/C02_Foothold.json" },
+				{ "id": "C03", "file": "Missions/C03_HalvikCrossing.json" },
+				{ "id": "C04", "file": "Missions/C04_GhostSignal.json" },
+				{ "id": "C05", "file": "Missions/C05_IronWinter.json" },
+				{ "id": "C06", "file": "Missions/C06_Aurora.json" }
+			]
+		},
+		{
+			"id": "pact",
+			"name": "The Long Night",
+			"faction": "pact",
+			"color": [0.85, 0.12, 0.08],
+			"tagline": "The Iron Pact campaign",
+			"synopsis": "Winter, 1958. Premier Dmitri Vasko has promised the Pact a swift and glorious victory, and Marshal Katya Volkova has chosen you to deliver it. Lead the iron armies west, guard the secret Aurora project - and discover exactly what your Premier is willing to sacrifice to win.",
+			"epilogue": "With the Aurora Control Center in loyal hands, Marshal Volkova broadcast one order to every Pact unit on the front: stand down. Premier Vasko was arrested at his dacha before dawn; Colonel Strel was never found. The Aurora Lance was dismantled under joint observation that summer. The war did not end with a surrender, but with a handshake on the Halvik bridge between two exhausted armies. History will remember Volkova. The soldiers who were there will remember you.",
+			"missions": [
+				{ "id": "P01", "file": "Missions/P01_FirstSnow.json" },
+				{ "id": "P02", "file": "Missions/P02_IronRoad.json" },
+				{ "id": "P03", "file": "Missions/P03_Silence.json" },
+				{ "id": "P04", "file": "Missions/P04_Sparks.json" },
+				{ "id": "P05", "file": "Missions/P05_BreakingTheLine.json" },
+				{ "id": "P06", "file": "Missions/P06_IronVerdict.json" }
+			]
+		}
+	]
+}
