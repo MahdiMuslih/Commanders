@@ -1,0 +1,116 @@
+{
+	"id": "P01",
+	"title": "First Snow",
+	"subtitle": "Destroy the Concord border post at Varn Ford",
+	"location": "Varn Ford",
+	"date": "17 December 1958, 15:55",
+	"briefing": [
+		"Comrade Commander. In one hour the Iron Pact will do what the cowards in Geneva said we would never dare: we will cross the Varn and take back the lands that were stolen from us in the last war.",
+		"Your task is the first blow. A Concord border post watches Varn Ford with a radar dome and a garrison. Destroy the barracks and the radar, and our main columns can cross unseen.",
+		"Marshal Volkova herself is watching this operation. Do not disappoint her. Rocket support will join you once you are across the river."
+	],
+	"victory_text": "Varn Ford is ours. The main columns are crossing.",
+
+	"map": {
+		"width": 48, "height": 40, "theme": "winter", "seed": 1217,
+		"water": [ [0, 17, 48, 2] ],
+		"roads": [ [23, 0, 2, 40], [0, 31, 30, 1] ],
+		"rocks": [ [0, 12, 4, 2], [40, 12, 8, 2], [30, 24, 2, 6], [16, 4, 2, 4] ],
+		"trees": [ [2, 2, 8, 6], [34, 2, 10, 6], [36, 26, 10, 6], [0, 21, 5, 6], [14, 22, 4, 4], [40, 34, 8, 6] ],
+		"random_trees": 0.03,
+		"clear": [ [18, 0, 12, 12], [2, 24, 22, 16] ]
+	},
+
+	"teams": [
+		{ "name": "Iron Pact", "faction": "pact", "player": true, "alliance": 0, "credits": 0, "can_build": false },
+		{ "name": "Concord Border Watch", "faction": "concord", "ai": true, "alliance": 1, "credits": 0, "difficulty": "normal",
+		  "ai_config": { "build": false, "produce": false, "attack": false, "defend": true } }
+	],
+
+	"entities": [
+		{ "type": "rifle", "team": 0, "at": [20, 3] },
+		{ "type": "rifle", "team": 0, "at": [21, 3] },
+		{ "type": "rifle", "team": 0, "at": [22, 3] },
+		{ "type": "rifle", "team": 0, "at": [25, 3] },
+		{ "type": "rifle", "team": 0, "at": [26, 3] },
+		{ "type": "rifle", "team": 0, "at": [27, 3] },
+		{ "type": "flamer", "team": 0, "at": [22, 5] },
+		{ "type": "flamer", "team": 0, "at": [25, 5] },
+		{ "type": "rocket", "team": 0, "at": [23, 6] },
+		{ "type": "bear", "team": 0, "at": [21, 8] },
+		{ "type": "bear", "team": 0, "at": [26, 8] },
+		{ "type": "wolf", "team": 0, "at": [24, 10] },
+
+		{ "type": "barracks", "team": 1, "at": [8, 31], "tag": "Outpost" },
+		{ "type": "radar", "team": 1, "at": [12, 33], "tag": "Outpost" },
+		{ "type": "power", "team": 1, "at": [5, 34] },
+		{ "type": "pillbox", "team": 1, "at": [21, 22] },
+		{ "type": "pillbox", "team": 1, "at": [26, 22] },
+		{ "type": "pillbox", "team": 1, "at": [10, 27] },
+		{ "type": "sentinel", "team": 1, "at": [14, 28] },
+		{ "type": "sentinel", "team": 1, "at": [5, 28] },
+		{ "type": "rifle", "team": 1, "at": [22, 24] },
+		{ "type": "rifle", "team": 1, "at": [25, 24] },
+		{ "type": "rocket", "team": 1, "at": [24, 25] },
+		{ "type": "rifle", "team": 1, "at": [9, 29] },
+		{ "type": "rifle", "team": 1, "at": [11, 30] },
+		{ "type": "rocket", "team": 1, "at": [13, 31] },
+		{ "type": "lancer", "team": 1, "at": [16, 33], "yaw": 270 },
+		{ "type": "lancer", "team": 1, "at": [18, 34], "yaw": 270 },
+		{ "type": "jeep", "team": 1, "at": [30, 34], "yaw": 180 }
+	],
+
+	"camera": [23, 6],
+
+	"objectives": [
+		{ "id": "outpost", "type": "destroy", "tag": "Outpost", "text": "Destroy the Concord barracks and radar dome at Varn Ford." }
+	],
+
+	"intro_cinematic": "intro",
+	"outro_cinematic": "outro",
+
+	"on_start": [
+		{ "type": "dialogue", "lines": [
+			{ "speaker": "Commissar Lev Orlov", "color": [1.0, 0.5, 0.45], "text": "The bridge is covered by two pillboxes. Flame troopers will make short work of them. Bears through the gap." },
+			{ "speaker": "Commissar Lev Orlov", "color": [1.0, 0.5, 0.45], "text": "Right-click to move and attack, Comrade. Drag a box to command many at once." }
+		] }
+	],
+
+	"triggers": [
+		{ "id": "across", "when": { "type": "area", "team": "player", "area": [0, 19, 48, 21] }, "actions": [
+			{ "type": "dialogue", "lines": [ { "speaker": "Marshal Katya Volkova", "color": [1.0, 0.3, 0.25], "text": "You are across. Good. Rocket support is moving up behind you." } ] },
+			{ "type": "spawn", "team": 0, "units": ["thunder", "thunder", "rifle", "rifle", "rifle"], "at": [24, 1], "move_to": [24, 14], "notify": true }
+		] },
+		{ "id": "alarm", "when": { "type": "time", "seconds": 150 }, "actions": [
+			{ "type": "dialogue", "lines": [ { "speaker": "Concord Radio (intercept)", "color": [0.5, 0.7, 1.0], "text": "Border Watch to Kessel, we are under attack at Varn Ford! Repeat, under attack! Send everything!" } ] },
+			{ "type": "spawn", "team": 1, "units": ["lancer", "lancer", "jeep", "rifle", "rifle", "rifle"], "at": [2, 39], "attack_move": [20, 26] }
+		] },
+		{ "id": "thunder_hint", "when": { "type": "time", "seconds": 60 }, "actions": [
+			{ "type": "dialogue", "lines": [ { "speaker": "Commissar Lev Orlov", "color": [1.0, 0.5, 0.45], "text": "Thunder rocket trucks fire from very far away, but not up close. Keep them behind your tanks." } ] }
+		] }
+	],
+
+	"cinematics": {
+		"intro": {
+			"letterbox": true, "fade_in": 2.5, "fade_out": 1.0,
+			"shots": [
+				{ "duration": 7, "from": [24, -6, 1500], "to": [24, -2, 1000], "look": [24, 8, 0], "fov": 50, "title": "THE LONG NIGHT", "title_sub": "Chapter One: First Snow" },
+				{ "duration": 9, "orbit": { "center": [24, 6], "radius": 6, "height": 600, "from": 60, "to": 120 }, "fov": 45,
+				  "speaker": "Marshal Katya Volkova", "text": "Commander. Twelve years ago they drew a line across our country and called it peace. Tonight we erase it." },
+				{ "duration": 8, "from": [24, 16, 500], "to": [16, 26, 700], "look": [12, 32, 0], "fov": 45,
+				  "speaker": "Marshal Katya Volkova", "text": "Their border post is blind to what is coming. Keep it that way. Destroy the barracks and the radar dome." },
+				{ "duration": 6, "from": [24, 2, 350], "to": [24, 8, 450], "look": [24, 18, 0], "fov": 45,
+				  "speaker": "Commissar Lev Orlov", "text": "The Premier is listening, Comrade. History is listening. Begin." }
+			]
+		},
+		"outro": {
+			"letterbox": true, "fade_in": 1.0, "fade_out": 2.5,
+			"shots": [
+				{ "duration": 8, "from": [12, 40, 900], "to": [12, 34, 1300], "look": [10, 30, 0], "fov": 48,
+				  "speaker": "Marshal Katya Volkova", "text": "The first snow has fallen, Commander. Tonight we march west." },
+				{ "duration": 8, "orbit": { "center": [24, 12], "radius": 8, "height": 900, "from": 90, "to": 140 }, "fov": 48,
+				  "speaker": "Commissar Lev Orlov", "text": "The Premier sends his congratulations. And a reminder, Commander: the word 'Aurora' does not exist. You have never heard it." }
+			]
+		}
+	}
+}

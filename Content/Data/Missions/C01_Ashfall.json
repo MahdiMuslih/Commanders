@@ -1,0 +1,154 @@
+{
+	"id": "C01",
+	"title": "Ashfall",
+	"subtitle": "Hold the border town of Kessel",
+	"location": "Kessel, Varn River border",
+	"date": "17 December 1958, 16:40",
+	"briefing": [
+		"Commander, the Iron Pact crossed the Varn River forty minutes ago along a forty-mile front. There was no declaration of war. There were no warning shots.",
+		"Kessel is the first town in their path. Its radio station is broadcasting the evacuation order that is keeping ten thousand civilians moving west. If it goes silent, the roads will fill with panic and the Pact will cut those people down.",
+		"You have a single recon platoon under Lieutenant Okafor. Hold the town until help arrives. Our observers report rocket fire from somewhere north-east of the river - find the battery and silence it."
+	],
+	"victory_text": "The rocket battery is silenced and the Pact vanguard has broken against Kessel. The evacuation continues through the night.",
+	"defeat_text": "Kessel has fallen. The evacuation has collapsed into chaos.",
+
+	"map": {
+		"width": 48, "height": 40, "theme": "dusk", "seed": 1958,
+		"water": [ [0, 13, 48, 2] ],
+		"roads": [ [23, 0, 2, 40], [0, 30, 48, 1], [10, 22, 1, 8] ],
+		"rocks": [ [0, 7, 3, 3], [14, 8, 3, 2], [44, 10, 4, 2], [33, 15, 2, 2] ],
+		"trees": [ [2, 1, 6, 5], [29, 8, 5, 3], [3, 17, 4, 6], [40, 17, 5, 5], [9, 36, 6, 3], [33, 35, 8, 3], [12, 2, 4, 3] ],
+		"random_trees": 0.025,
+		"clear": [ [12, 19, 22, 18], [33, 1, 14, 10], [19, 0, 9, 13] ],
+		"ore": [ { "at": [6, 26], "radius": 2, "richness": 6 } ]
+	},
+
+	"teams": [
+		{ "name": "Concord", "faction": "concord", "player": true, "alliance": 0, "credits": 0, "can_build": false },
+		{ "name": "Pact Vanguard", "faction": "pact", "ai": true, "alliance": 1, "credits": 0, "difficulty": "normal",
+		  "ai_config": { "build": false, "produce": false, "attack": false, "defend": true } },
+		{ "name": "Civilians", "faction": "neutral", "neutral": true, "alliance": 7, "color": "grey" }
+	],
+
+	"entities": [
+		{ "type": "radiostation", "team": 0, "at": [21, 23], "tag": "Radio" },
+		{ "type": "farmhouse", "team": 2, "at": [14, 21] },
+		{ "type": "farmhouse", "team": 2, "at": [28, 20] },
+		{ "type": "farmhouse", "team": 2, "at": [15, 26] },
+		{ "type": "farmhouse", "team": 2, "at": [30, 25] },
+		{ "type": "church", "team": 2, "at": [26, 23] },
+
+		{ "type": "rifle", "team": 0, "at": [20, 32] },
+		{ "type": "rifle", "team": 0, "at": [21, 32] },
+		{ "type": "rifle", "team": 0, "at": [22, 32] },
+		{ "type": "rifle", "team": 0, "at": [25, 32] },
+		{ "type": "rifle", "team": 0, "at": [26, 32] },
+		{ "type": "rifle", "team": 0, "at": [27, 32] },
+		{ "type": "rocket", "team": 0, "at": [22, 34] },
+		{ "type": "rocket", "team": 0, "at": [25, 34] },
+		{ "type": "lancer", "team": 0, "at": [21, 36], "yaw": 270 },
+		{ "type": "lancer", "team": 0, "at": [26, 36], "yaw": 270 },
+		{ "type": "jeep", "team": 0, "at": [23, 37], "yaw": 270 },
+
+		{ "type": "rifle", "team": 1, "at": [21, 10] },
+		{ "type": "rifle", "team": 1, "at": [26, 10] },
+		{ "type": "wolf", "team": 1, "at": [24, 8] },
+
+		{ "type": "thunder", "team": 1, "at": [38, 4], "tag": "Artillery", "yaw": 200 },
+		{ "type": "thunder", "team": 1, "at": [41, 5], "tag": "Artillery", "yaw": 200 },
+		{ "type": "bear", "team": 1, "at": [36, 7], "yaw": 180 },
+		{ "type": "rifle", "team": 1, "at": [37, 8] },
+		{ "type": "rifle", "team": 1, "at": [39, 8] },
+		{ "type": "rifle", "team": 1, "at": [41, 8] },
+		{ "type": "flamer", "team": 1, "at": [43, 7] },
+		{ "type": "bunker", "team": 1, "at": [39, 10] }
+	],
+
+	"camera": [23, 30],
+
+	"objectives": [
+		{ "id": "radio", "type": "protect", "tag": "Radio", "text": "Keep the Kessel Radio Station on the air.", "fail_text": "The radio station has been destroyed. The evacuation has collapsed." },
+		{ "id": "battery", "type": "destroy", "tag": "Artillery", "text": "Find and destroy the Pact rocket battery.", "hidden": true }
+	],
+
+	"intro_cinematic": "intro",
+	"outro_cinematic": "outro",
+
+	"on_start": [
+		{ "type": "dialogue", "lines": [
+			{ "speaker": "Lt. Sarah Okafor", "color": [0.4, 0.75, 1.0], "text": "Platoon's in position, Commander. Riflemen on the road, Lancers covering the bridge approach." },
+			{ "speaker": "Lt. Sarah Okafor", "color": [0.4, 0.75, 1.0], "text": "Right-click to move, right-click an enemy to attack. Drag a box to grab the whole squad." }
+		] }
+	],
+
+	"triggers": [
+		{ "id": "wave1", "when": { "type": "time", "seconds": 20 }, "actions": [
+			{ "type": "spawn", "team": 1, "units": ["rifle", "rifle", "rifle", "rifle", "wolf"], "at": [23, 1], "attack_move": [22, 25] },
+			{ "type": "dialogue", "lines": [ { "speaker": "Lt. Sarah Okafor", "color": [0.4, 0.75, 1.0], "text": "Contact north! Infantry coming over the bridge!" } ] }
+		] },
+		{ "id": "shell1", "repeat": true, "interval": 17, "when": { "type": "all", "conditions": [ { "type": "time", "seconds": 30 }, { "type": "not", "condition": { "type": "destroyed", "tag": "Artillery" } } ] },
+		  "actions": [ { "type": "explosion", "at": [19, 19], "size": 1.6 } ] },
+		{ "id": "shell2", "repeat": true, "interval": 23, "when": { "type": "all", "conditions": [ { "type": "time", "seconds": 36 }, { "type": "not", "condition": { "type": "destroyed", "tag": "Artillery" } } ] },
+		  "actions": [ { "type": "explosion", "at": [28, 17], "size": 1.4 } ] },
+		{ "id": "shell3", "repeat": true, "interval": 29, "when": { "type": "all", "conditions": [ { "type": "time", "seconds": 44 }, { "type": "not", "condition": { "type": "destroyed", "tag": "Artillery" } } ] },
+		  "actions": [ { "type": "explosion", "at": [13, 27], "size": 1.8 } ] },
+		{ "id": "reveal_battery", "when": { "type": "time", "seconds": 55 }, "actions": [
+			{ "type": "dialogue", "lines": [
+				{ "speaker": "Lt. Sarah Okafor", "color": [0.4, 0.75, 1.0], "text": "Those rockets are coming from the north-east ridge. Spotters make it a Thunder battery." },
+				{ "speaker": "Gen. Adrian Hale", "color": [0.95, 0.8, 0.45], "text": "Then that battery is your priority, Commander. Silence it and their whole push stalls." }
+			] },
+			{ "type": "reveal", "at": [39, 5], "radius": 5 },
+			{ "type": "objective_show", "id": "battery" }
+		] },
+		{ "id": "wave2", "when": { "type": "time", "seconds": 75 }, "actions": [
+			{ "type": "spawn", "team": 1, "units": ["rifle", "rifle", "rifle", "flamer", "flamer", "rocket"], "at": [5, 1], "attack_move": [21, 25] }
+		] },
+		{ "id": "reinforcements", "when": { "type": "time", "seconds": 110 }, "actions": [
+			{ "type": "spawn", "team": 0, "units": ["lancer", "lancer", "warden", "jeep", "rocket", "rocket", "rifle", "rifle"], "at": [24, 39], "move_to": [24, 31], "notify": true, "yaw": 270 },
+			{ "type": "dialogue", "lines": [ { "speaker": "Capt. Jonah Reyes", "color": [0.5, 1.0, 0.6], "text": "Reyes here with the 7th Cavalry. Sorry we're late, Commander - the roads are jammed with refugees. Where do you want us?" } ] }
+		] },
+		{ "id": "wave3", "when": { "type": "time", "seconds": 150 }, "actions": [
+			{ "type": "spawn", "team": 1, "units": ["bear", "wolf", "rifle", "rifle", "rifle"], "at": [45, 1], "attack_move": [22, 25] },
+			{ "type": "dialogue", "lines": [ { "speaker": "Lt. Sarah Okafor", "color": [0.4, 0.75, 1.0], "text": "Heavy armour fording the river to the east! That's a Bear - rockets and tanks on it, now!" } ] }
+		] },
+		{ "id": "waves", "repeat": true, "interval": 75, "when": { "type": "all", "conditions": [ { "type": "time", "seconds": 230 }, { "type": "not", "condition": { "type": "destroyed", "tag": "Artillery" } } ] },
+		  "actions": [ { "type": "spawn", "team": 1, "units": ["rifle", "rifle", "rifle", "flamer", "wolf"], "at": [23, 1], "attack_move": [22, 25] } ] },
+		{ "id": "radio_hurt", "when": { "type": "damaged", "tag": "Radio", "below": 0.5 }, "actions": [
+			{ "type": "dialogue", "lines": [ { "speaker": "Gen. Adrian Hale", "color": [0.95, 0.8, 0.45], "text": "The radio station is taking heavy fire! Get your troops back to Kessel!" } ] }
+		] },
+		{ "id": "near_battery", "when": { "type": "area", "team": "player", "area": [32, 1, 15, 11] }, "actions": [
+			{ "type": "dialogue", "lines": [ { "speaker": "Capt. Jonah Reyes", "color": [0.5, 1.0, 0.6], "text": "Eyes on the rocket trucks. There's a flame bunker covering them - hit it from range." } ] }
+		] }
+	],
+
+	"cinematics": {
+		"intro": {
+			"letterbox": true, "fade_in": 2.0, "fade_out": 1.0,
+			"shots": [
+				{ "duration": 7, "from": [24, 48, 1500], "to": [24, 44, 1150], "look": [24, 24, 0], "fov": 50, "title": "OPERATION THAW", "title_sub": "Chapter One: Ashfall" },
+				{ "duration": 7, "from": [11, 31, 320], "to": [33, 31, 320], "look": [16, 23, 60], "look_to": [30, 22, 60], "fov": 45,
+				  "speaker": "Lt. Sarah Okafor", "text": "Kessel outpost to Command. Civilians are still coming in from the farms. The radio is broadcasting the evacuation order every five minutes." },
+				{ "duration": 6, "from": [24, 20, 450], "to": [24, 17, 650], "look": [24, 6, 0], "fov": 45, "shake": 0.4,
+				  "speaker": "Lt. Sarah Okafor", "text": "Wait... movement across the Varn. Vehicles. No running lights." },
+				{ "duration": 8, "orbit": { "center": [23, 33], "radius": 6, "height": 650, "from": 200, "to": 250 }, "fov": 45,
+				  "speaker": "Gen. Adrian Hale", "text": "Commander, this is General Hale. The Pact has crossed the border without a declaration of war. Kessel is the first town in their path." },
+				{ "duration": 7, "orbit": { "center": [22, 25], "radius": 7, "height": 800, "from": 250, "to": 290 }, "fov": 45,
+				  "speaker": "Gen. Adrian Hale", "text": "That radio station is the only thing keeping ten thousand people moving west. Keep it on the air. Help is on the way." }
+			],
+			"events": [
+				{ "t": 15.5, "action": { "type": "explosion", "at": [22, 13], "size": 2.2 } },
+				{ "t": 17.0, "action": { "type": "explosion", "at": [27, 15], "size": 1.6 } },
+				{ "t": 19.0, "action": { "type": "explosion", "at": [18, 12], "size": 2.0 } }
+			]
+		},
+		"outro": {
+			"letterbox": true, "fade_in": 1.0, "fade_out": 2.5,
+			"shots": [
+				{ "duration": 8, "orbit": { "center": [39, 5], "radius": 5, "height": 450, "from": 90, "to": 150 }, "fov": 45,
+				  "speaker": "Lt. Sarah Okafor", "text": "Battery's down. Commander... you need to see this. The rocket casings are stamped with a symbol - a sunburst over a mountain. And one word: AURORA." },
+				{ "duration": 8, "from": [24, 42, 1400], "to": [24, 34, 2100], "look": [22, 22, 0], "fov": 50,
+				  "speaker": "Gen. Adrian Hale", "text": "Aurora. I've heard that name once before, in an intelligence report nobody believed. Get some rest, Commander. They'll be back by morning." }
+			]
+		}
+	}
+}

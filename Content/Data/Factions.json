@@ -1,0 +1,37 @@
+{
+	"factions": [
+		{
+			"id": "concord",
+			"name": "Western Concord",
+			"motto": "Many nations. One shield.",
+			"description": "A coalition of free nations. Concord forces favour mobility, precision and air power: fast Lancer tanks, long-range Longbow artillery, Ranger snipers and Hawk gunships, protected by Sentinel turrets and Skyguard flak.",
+			"color": [0.08, 0.28, 0.85],
+			"mcv": "mcv",
+			"harvester": "harvester",
+			"ai_defenses": ["pillbox", "sentinel", "skyguard"],
+			"starter_units": ["rifle", "rifle", "rifle", "rocket", "lancer", "lancer"]
+		},
+		{
+			"id": "pact",
+			"name": "Iron Pact",
+			"motto": "Steel endures. Winter is coming.",
+			"description": "A vast eastern union of industry and iron discipline. Pact armour is slow but brutal: Bear heavy tanks, Thunder rocket launchers and the colossal Titan, guarded by Flame Bunkers and devastating Arc Towers.",
+			"color": [0.78, 0.06, 0.04],
+			"mcv": "mcv",
+			"harvester": "harvester",
+			"ai_defenses": ["bunker", "flakcannon", "arctower"],
+			"starter_units": ["rifle", "rifle", "rifle", "flamer", "bear"]
+		},
+		{
+			"id": "neutral",
+			"name": "Civilians",
+			"motto": "",
+			"description": "Townsfolk, oil workers and anyone else caught between the armies.",
+			"color": [0.45, 0.45, 0.42],
+			"mcv": "mcv",
+			"harvester": "harvester",
+			"ai_defenses": [],
+			"starter_units": []
+		}
+	]
+}

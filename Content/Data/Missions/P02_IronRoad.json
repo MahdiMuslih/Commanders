@@ -1,0 +1,123 @@
+{
+	"id": "P02",
+	"title": "The Iron Road",
+	"subtitle": "Break the Concord hold on the Rhona Pass",
+	"location": "Rhona Pass",
+	"date": "19 December 1958, 09:00",
+	"briefing": [
+		"Our columns are across the Varn, but the Concord has fortified the Rhona Pass - the iron road our supply trains must take west.",
+		"You will deploy an MCV at the eastern end of the pass. Build power, refineries and a war factory, then crush the Concord base in the north-west. Bear heavy tanks are yours to command.",
+		"The pass also holds two oil derricks the Concord abandoned. Marshal Volkova would appreciate the fuel - send an Engineer."
+	],
+	"victory_text": "The Rhona Pass is open. Pact supply trains roll west.",
+
+	"map": {
+		"width": 64, "height": 56, "theme": "temperate", "seed": 1219,
+		"rocks": [ [40, 18, 3, 12], [16, 28, 12, 2], [56, 22, 8, 2], [0, 30, 6, 2], [34, 48, 2, 8], [46, 0, 2, 6] ],
+		"trees": [ [52, 2, 10, 8], [26, 10, 6, 6], [48, 30, 6, 4], [8, 38, 8, 6], [26, 40, 6, 4], [0, 46, 8, 8] ],
+		"water": [ [32, 14, 5, 4] ],
+		"roads": [ [12, 20, 1, 30], [12, 20, 50, 1], [12, 49, 46, 1] ],
+		"random_trees": 0.02, "random_rocks": 0.004,
+		"clear": [ [38, 36, 26, 20], [0, 0, 24, 20] ],
+		"ore": [
+			{ "at": [44, 44], "radius": 3.5, "richness": 9 },
+			{ "at": [57, 35], "radius": 2.5, "richness": 8 },
+			{ "at": [22, 6], "radius": 3, "richness": 9 },
+			{ "at": [30, 25], "radius": 3, "richness": 12, "gems": true }
+		]
+	},
+
+	"teams": [
+		{ "name": "Iron Pact", "faction": "pact", "player": true, "alliance": 0, "credits": 5000,
+		  "allowed": ["power", "refinery", "barracks", "factory", "radar", "bunker", "rifle", "rocket", "flamer", "engineer", "harvester", "wolf", "bear"] },
+		{ "name": "Concord Pass Garrison", "faction": "concord", "ai": true, "alliance": 1, "credits": 3000, "difficulty": "easy",
+		  "allowed": ["power", "refinery", "barracks", "factory", "pillbox", "sentinel", "rifle", "rocket", "engineer", "harvester", "jeep", "lancer", "warden"],
+		  "ai_config": { "first_attack": 330, "attack_interval": 200 } },
+		{ "name": "Civilians", "faction": "neutral", "neutral": true, "alliance": 7, "color": "grey" }
+	],
+
+	"entities": [
+		{ "type": "mcv", "team": 0, "at": [53, 50], "tag": "Column", "yaw": 180 },
+		{ "type": "rifle", "team": 0, "at": [58, 52], "tag": "Column" },
+		{ "type": "rifle", "team": 0, "at": [59, 52], "tag": "Column" },
+		{ "type": "rifle", "team": 0, "at": [60, 53], "tag": "Column" },
+		{ "type": "flamer", "team": 0, "at": [57, 53], "tag": "Column" },
+		{ "type": "rocket", "team": 0, "at": [61, 52], "tag": "Column" },
+		{ "type": "bear", "team": 0, "at": [56, 54], "tag": "Column", "yaw": 180 },
+		{ "type": "wolf", "team": 0, "at": [60, 54], "tag": "Column", "yaw": 180 },
+
+		{ "type": "conyard", "team": 1, "at": [6, 4] },
+		{ "type": "power", "team": 1, "at": [10, 4] },
+		{ "type": "power", "team": 1, "at": [13, 4] },
+		{ "type": "refinery", "team": 1, "at": [15, 8] },
+		{ "type": "barracks", "team": 1, "at": [5, 9] },
+		{ "type": "factory", "team": 1, "at": [9, 8] },
+		{ "type": "harvester", "team": 1, "at": [16, 12] },
+		{ "type": "pillbox", "team": 1, "at": [6, 15] },
+		{ "type": "sentinel", "team": 1, "at": [13, 15] },
+		{ "type": "pillbox", "team": 1, "at": [19, 14] },
+		{ "type": "rifle", "team": 1, "at": [8, 17] },
+		{ "type": "rifle", "team": 1, "at": [10, 17] },
+		{ "type": "rocket", "team": 1, "at": [12, 17] },
+		{ "type": "lancer", "team": 1, "at": [15, 17], "yaw": 90 },
+		{ "type": "warden", "team": 1, "at": [18, 17], "yaw": 90 },
+		{ "type": "jeep", "team": 1, "at": [24, 22] },
+
+		{ "type": "derrick", "team": 2, "at": [34, 32], "tag": "Derrick" },
+		{ "type": "derrick", "team": 2, "at": [20, 40], "tag": "Derrick" },
+		{ "type": "farmhouse", "team": 2, "at": [44, 10] },
+		{ "type": "church", "team": 2, "at": [28, 34] }
+	],
+
+	"camera": [52, 47],
+
+	"objectives": [
+		{ "id": "deploy", "type": "build", "entity": "conyard", "count": 1, "text": "Deploy the MCV (select it, press D)." },
+		{ "id": "destroy", "type": "destroy_all", "text": "Destroy the Concord garrison in the Rhona Pass." },
+		{ "id": "derrick", "type": "capture", "tag": "Derrick", "primary": false, "text": "Capture an Oil Derrick with an Engineer." }
+	],
+
+	"intro_cinematic": "intro",
+
+	"triggers": [
+		{ "id": "deployed", "when": { "type": "built", "team": "player", "entity": "conyard" }, "actions": [
+			{ "type": "dialogue", "lines": [
+				{ "speaker": "Commissar Lev Orlov", "color": [1.0, 0.5, 0.45], "text": "Power first, Comrade - a factory without power is a monument. Then a refinery on the ore to the west." },
+				{ "speaker": "Commissar Lev Orlov", "color": [1.0, 0.5, 0.45], "text": "Choose a structure from the BUILD tab. When it is READY, click again and place it beside the Construction Yard." }
+			] }
+		] },
+		{ "id": "factory", "when": { "type": "built", "team": "player", "entity": "factory" }, "actions": [
+			{ "type": "dialogue", "lines": [ { "speaker": "Marshal Katya Volkova", "color": [1.0, 0.3, 0.25], "text": "Bears are slow, Commander, but nothing the Concord fields can stand in front of them. Build them, and build many." } ] }
+		] },
+		{ "id": "scouts", "when": { "type": "time", "seconds": 200 }, "actions": [
+			{ "type": "spawn", "team": 1, "units": ["jeep", "jeep", "lancer", "rifle", "rifle"], "at": [24, 21], "attack_move": [50, 46] },
+			{ "type": "dialogue", "lines": [ { "speaker": "Commissar Lev Orlov", "color": [1.0, 0.5, 0.45], "text": "Concord raiders coming down the iron road!" } ] }
+		] },
+		{ "id": "spot_base", "when": { "type": "area", "team": "player", "area": [0, 0, 24, 22] }, "actions": [
+			{ "type": "dialogue", "lines": [ { "speaker": "Marshal Katya Volkova", "color": [1.0, 0.3, 0.25], "text": "Their Construction Yard is the head of the snake. Cut it off." } ] }
+		] },
+		{ "id": "intercept", "when": { "type": "count_below", "team": 1, "what": "buildings", "count": 4 }, "actions": [
+			{ "type": "dialogue", "lines": [
+				{ "speaker": "Concord Radio (intercept)", "color": [0.5, 0.7, 1.0], "text": "Rhona garrison to Hale. We can't hold, sir - pulling back to Halvik." },
+				{ "speaker": "Gen. Adrian Hale (intercept)", "color": [0.95, 0.8, 0.45], "text": "Understood. Blow the bridges behind you. Whoever their commander is... they're good." },
+				{ "speaker": "Marshal Katya Volkova", "color": [1.0, 0.3, 0.25], "text": "Hear that? Even the enemy knows your name now." }
+			] }
+		] }
+	],
+
+	"cinematics": {
+		"intro": {
+			"letterbox": true, "fade_in": 2.0, "fade_out": 1.0,
+			"shots": [
+				{ "duration": 7, "from": [60, 60, 1500], "to": [56, 56, 1000], "look": [52, 48, 0], "fov": 50, "title": "CHAPTER TWO", "title_sub": "The Iron Road" },
+				{ "duration": 8, "from": [44, 28, 900], "to": [26, 20, 1100], "look": [30, 24, 0], "look_to": [12, 10, 0], "fov": 48,
+				  "speaker": "Marshal Katya Volkova", "text": "The Rhona Pass. Every train we send west must come through here, and the Concord knows it." },
+				{ "duration": 7, "orbit": { "center": [11, 10], "radius": 9, "height": 900, "from": 30, "to": 80 }, "fov": 45,
+				  "speaker": "Marshal Katya Volkova", "text": "Build your base. Then go and take it from them." }
+			],
+			"events": [
+				{ "t": 1.0, "action": { "type": "order", "tag": "Column", "move_to": [52, 47] } }
+			]
+		}
+	}
+}

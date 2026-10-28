@@ -1,0 +1,160 @@
+{
+	"id": "C05",
+	"title": "Iron Winter",
+	"subtitle": "Rescue Dr. Ilse Varga from Station Nine",
+	"location": "Station Nine, Karst Plateau",
+	"date": "28 December 1958, 11:00",
+	"briefing": [
+		"We have found Station Nine: a Pact research compound on the Karst Plateau, at the edge of a storm that has not moved in four days. Doctor Varga is inside.",
+		"You will land with an MCV at the southern edge of the plateau. Build a base, fight your way to the station and bring Doctor Varga back to the extraction helipad in the south-west. A Hawk gunship will carry her out.",
+		"The Pact will know what she means the moment they see us move. Expect everything they have. Doctor Varga must survive - without her, we may never find a way to stop Aurora."
+	],
+	"victory_text": "Dr. Varga is aboard the extraction flight. For the first time, we know what we are fighting.",
+
+	"map": {
+		"width": 72, "height": 64, "theme": "winter", "seed": 99,
+		"rocks": [ [0, 16, 14, 2], [20, 0, 2, 12], [24, 24, 14, 2], [44, 30, 2, 12], [56, 26, 16, 2], [12, 40, 10, 2], [30, 44, 2, 8] ],
+		"trees": [ [0, 20, 8, 8], [26, 10, 8, 8], [40, 16, 4, 6], [60, 40, 10, 8], [16, 50, 6, 6], [48, 50, 6, 6] ],
+		"water": [ [4, 30, 8, 5], [50, 4, 4, 3] ],
+		"roads": [ [36, 30, 1, 34], [8, 12, 30, 1], [36, 12, 1, 18] ],
+		"random_trees": 0.03, "random_rocks": 0.004,
+		"clear": [ [26, 48, 22, 16], [0, 50, 12, 14], [2, 2, 16, 12], [48, 2, 24, 22] ],
+		"ore": [
+			{ "at": [44, 56], "radius": 3.5, "richness": 9 },
+			{ "at": [24, 58], "radius": 3, "richness": 9 },
+			{ "at": [36, 36], "radius": 3, "richness": 12, "gems": true },
+			{ "at": [62, 30], "radius": 3, "richness": 9 },
+			{ "at": [46, 8], "radius": 3, "richness": 9 }
+		]
+	},
+
+	"teams": [
+		{ "name": "Concord", "faction": "concord", "player": true, "alliance": 0, "credits": 6000,
+		  "locked": ["mcv"] },
+		{ "name": "Pact Plateau Command", "faction": "pact", "ai": true, "alliance": 1, "credits": 8000, "difficulty": "normal",
+		  "locked": ["titan", "arctower"],
+		  "ai_config": { "first_attack": 300, "attack_interval": 150, "attack_size": 6 } },
+		{ "name": "Station Nine Staff", "faction": "neutral", "neutral": true, "alliance": 7, "color": [0.8, 0.8, 0.85] }
+	],
+
+	"entities": [
+		{ "type": "mcv", "team": 0, "at": [36, 58], "yaw": 270 },
+		{ "type": "warden", "team": 0, "at": [32, 60], "yaw": 270 },
+		{ "type": "warden", "team": 0, "at": [40, 60], "yaw": 270 },
+		{ "type": "lancer", "team": 0, "at": [33, 56], "yaw": 270 },
+		{ "type": "lancer", "team": 0, "at": [39, 56], "yaw": 270 },
+		{ "type": "rifle", "team": 0, "at": [34, 61] },
+		{ "type": "rifle", "team": 0, "at": [35, 61] },
+		{ "type": "rifle", "team": 0, "at": [37, 61] },
+		{ "type": "rifle", "team": 0, "at": [38, 61] },
+		{ "type": "rocket", "team": 0, "at": [35, 62] },
+		{ "type": "rocket", "team": 0, "at": [37, 62] },
+		{ "type": "engineer", "team": 0, "at": [36, 62] },
+		{ "type": "helipad", "team": 0, "at": [4, 56], "tag": "LZ" },
+
+		{ "type": "scientist", "team": 2, "at": [10, 7], "tag": "Varga" },
+		{ "type": "techcenter", "team": 1, "at": [6, 4] },
+		{ "type": "radar", "team": 1, "at": [12, 4] },
+		{ "type": "power", "team": 1, "at": [15, 4] },
+		{ "type": "bunker", "team": 1, "at": [8, 13] },
+		{ "type": "bunker", "team": 1, "at": [14, 13] },
+		{ "type": "flakcannon", "team": 1, "at": [3, 9] },
+		{ "type": "rifle", "team": 1, "at": [9, 11] },
+		{ "type": "rifle", "team": 1, "at": [11, 11] },
+		{ "type": "rifle", "team": 1, "at": [13, 11] },
+		{ "type": "shock", "team": 1, "at": [10, 10] },
+		{ "type": "bear", "team": 1, "at": [16, 9], "yaw": 180 },
+
+		{ "type": "conyard", "team": 1, "at": [58, 4] },
+		{ "type": "power", "team": 1, "at": [62, 4] },
+		{ "type": "power", "team": 1, "at": [65, 4] },
+		{ "type": "power", "team": 1, "at": [68, 4] },
+		{ "type": "refinery", "team": 1, "at": [52, 8] },
+		{ "type": "barracks", "team": 1, "at": [58, 9] },
+		{ "type": "factory", "team": 1, "at": [62, 8] },
+		{ "type": "radar", "team": 1, "at": [67, 8] },
+		{ "type": "helipad", "team": 1, "at": [67, 12] },
+		{ "type": "harvester", "team": 1, "at": [53, 12] },
+		{ "type": "bunker", "team": 1, "at": [54, 18] },
+		{ "type": "bunker", "team": 1, "at": [62, 18] },
+		{ "type": "flakcannon", "team": 1, "at": [58, 16] },
+		{ "type": "bear", "team": 1, "at": [57, 20], "yaw": 90 },
+		{ "type": "bear", "team": 1, "at": [61, 20], "yaw": 90 },
+		{ "type": "thunder", "team": 1, "at": [59, 14], "yaw": 90 },
+		{ "type": "rifle", "team": 1, "at": [55, 21] },
+		{ "type": "rifle", "team": 1, "at": [63, 21] }
+	],
+
+	"camera": [36, 55],
+
+	"objectives": [
+		{ "id": "find", "type": "reach", "area": [3, 3, 14, 10], "team": "player", "min": 1, "text": "Reach Station Nine and find Dr. Varga (north-west)." },
+		{ "id": "escort", "type": "reach", "area": [2, 53, 9, 9], "tag": "Varga", "hidden": true, "text": "Escort Dr. Varga to the extraction helipad (south-west)." },
+		{ "id": "varga", "type": "protect", "tag": "Varga", "text": "Dr. Varga must survive.", "fail_text": "Dr. Varga has been killed. Aurora's secrets died with her." },
+		{ "id": "base", "type": "destroy_all", "primary": false, "text": "Destroy Pact Plateau Command." }
+	],
+
+	"intro_cinematic": "intro",
+	"outro_cinematic": "outro",
+
+	"on_start": [
+		{ "type": "dialogue", "lines": [
+			{ "speaker": "Gen. Adrian Hale", "color": [0.95, 0.8, 0.45], "text": "Deploy, build, and push north-west. Station Nine is behind a ridge line - the road will take you most of the way." },
+			{ "speaker": "Lt. Sarah Okafor", "color": [0.4, 0.75, 1.0], "text": "Hawk gunships are cleared for this operation, Commander. Build a Helipad once you have a Radar Dome." }
+		] }
+	],
+
+	"triggers": [
+		{ "id": "storm", "when": { "type": "time", "seconds": 240 }, "actions": [
+			{ "type": "sun", "pitch": -14, "yaw": 80 },
+			{ "type": "dialogue", "lines": [ { "speaker": "Lt. Sarah Okafor", "color": [0.4, 0.75, 1.0], "text": "Temperature just dropped eleven degrees in a minute. The storm is moving toward us. It's moving against the wind." } ] }
+		] },
+		{ "id": "found", "when": { "type": "objective", "id": "find" }, "actions": [
+			{ "type": "transfer", "tag": "Varga", "to": "player" },
+			{ "type": "objective_show", "id": "escort" },
+			{ "type": "dialogue", "lines": [
+				{ "speaker": "Dr. Ilse Varga", "color": [0.85, 0.85, 1.0], "text": "You came. I did not think anyone would actually come." },
+				{ "speaker": "Dr. Ilse Varga", "color": [0.85, 0.85, 1.0], "text": "They will have seen you. Strel's men will be here within minutes. Please - get me to your aircraft." }
+			] },
+			{ "type": "spawn", "team": 1, "units": ["wolf", "wolf", "rifle", "rifle", "rifle", "shock"], "at": [24, 1], "attack_move": [10, 10] },
+			{ "type": "ai_attack", "team": 1, "target": [10, 20] },
+			{ "type": "delay", "seconds": 45, "actions": [
+				{ "type": "spawn", "team": 1, "units": ["vulture", "vulture"], "at": [40, 1], "attack_move": [10, 30] },
+				{ "type": "dialogue", "lines": [ { "speaker": "Lt. Sarah Okafor", "color": [0.4, 0.75, 1.0], "text": "Vultures hunting the escort! Get rockets or flak around the Doctor!" } ] }
+			] }
+		] },
+		{ "id": "varga_hurt", "when": { "type": "damaged", "tag": "Varga", "below": 0.5 }, "actions": [
+			{ "type": "dialogue", "lines": [ { "speaker": "Gen. Adrian Hale", "color": [0.95, 0.8, 0.45], "text": "The Doctor is hit! Cover her, Commander - whatever it takes!" } ] }
+		] },
+		{ "id": "halfway", "when": { "type": "area", "tag": "Varga", "team": "player", "area": [0, 30, 30, 14] }, "actions": [
+			{ "type": "dialogue", "lines": [
+				{ "speaker": "Dr. Ilse Varga", "color": [0.85, 0.85, 1.0], "text": "The Lance draws power from a ring of plants around it. The shield is strong, but the Lance itself is fragile. Like all proud things." }
+			] }
+		] }
+	],
+
+	"cinematics": {
+		"intro": {
+			"letterbox": true, "fade_in": 2.5, "fade_out": 1.0,
+			"shots": [
+				{ "duration": 7, "from": [36, 64, 1800], "to": [36, 60, 1100], "look": [36, 50, 0], "fov": 50, "title": "CHAPTER FIVE", "title_sub": "Iron Winter" },
+				{ "duration": 8, "from": [20, 30, 1200], "to": [12, 18, 900], "look": [10, 8, 0], "fov": 46,
+				  "speaker": "Gen. Adrian Hale", "text": "Station Nine. Officially, a meteorological institute. Unofficially, the place where the Pact learned to break the sky." },
+				{ "duration": 7, "orbit": { "center": [10, 7], "radius": 4, "height": 350, "from": 60, "to": 110 }, "fov": 40,
+				  "speaker": "Dr. Ilse Varga", "text": "Whoever is listening... the guards change at noon. If you are coming, come now." }
+			]
+		},
+		"outro": {
+			"letterbox": true, "fade_in": 1.0, "fade_out": 2.5,
+			"shots": [
+				{ "duration": 8, "orbit": { "center": [5, 57], "radius": 6, "height": 500, "from": 300, "to": 360 }, "fov": 45,
+				  "speaker": "Dr. Ilse Varga", "text": "The Aurora Lance stands on Mount Belov. When it fires at full power, it can hold a storm over a country for a month. Vasko means to fire it at Geneva on the solstice." },
+				{ "duration": 8, "from": [20, 64, 1400], "to": [10, 58, 2000], "look": [5, 57, 0], "fov": 50,
+				  "speaker": "Gen. Adrian Hale", "text": "Then we have one week, and one target. Commander - prepare your forces. We're going to Mount Belov." }
+			],
+			"events": [
+				{ "t": 0.2, "action": { "type": "spawn", "team": 0, "units": ["hawk"], "at": [24, 62], "move_to": [5, 57] } }
+			]
+		}
+	}
+}

@@ -1,0 +1,676 @@
+{
+	"_comment": [
+		"Every unit and structure. Models are built from primitives: shape = cube|sphere|cylinder|cone|plane or any /Game/... static mesh path.",
+		"at = offset in UU (x forward, y right, z up), size = scale (1.0 = 100 UU), rot = [pitch, yaw, roll].",
+		"color = team|teamdark|metal|dark|concrete|glass|light|named colour|[r,g,b]. turret parts rotate to aim, spin = deg/s.",
+		"Structures are centred on their footprint (1 cell = 200 UU). Gameplay distances are in cells."
+	],
+
+	"templates": {
+		"pad1": [ { "shape": "cube", "at": [0, 0, 4], "size": [1.94, 1.94, 0.08], "color": "concrete" } ],
+		"pad2": [ { "shape": "cube", "at": [0, 0, 4], "size": [3.92, 3.92, 0.08], "color": "concrete" } ],
+		"pad3": [ { "shape": "cube", "at": [0, 0, 4], "size": [5.92, 5.92, 0.08], "color": "concrete" } ],
+		"pad4": [ { "shape": "cube", "at": [0, 0, 4], "size": [7.92, 7.92, 0.08], "color": "concrete" } ],
+
+		"soldier": [
+			{ "shape": "cube", "at": [0, 0, 18], "size": [0.16, 0.22, 0.36], "color": "teamdark" },
+			{ "shape": "cylinder", "at": [0, 0, 50], "size": [0.3, 0.3, 0.32], "color": "team" },
+			{ "shape": "sphere", "at": [0, 0, 77], "size": [0.19, 0.19, 0.19], "color": [0.78, 0.58, 0.44] },
+			{ "shape": "sphere", "at": [0, 0, 83], "size": [0.22, 0.22, 0.12], "color": "teamdark" }
+		],
+		"rifle_arms": [ { "shape": "cube", "at": [16, 9, 52], "size": [0.48, 0.05, 0.06], "color": "dark" } ],
+
+		"tracks_small": [
+			{ "shape": "cube", "at": [0, 50, 20], "size": [1.5, 0.3, 0.38], "color": "dark" },
+			{ "shape": "cube", "at": [0, -50, 20], "size": [1.5, 0.3, 0.38], "color": "dark" }
+		],
+		"tracks_medium": [
+			{ "shape": "cube", "at": [0, 58, 24], "size": [1.75, 0.32, 0.46], "color": "dark" },
+			{ "shape": "cube", "at": [0, -58, 24], "size": [1.75, 0.32, 0.46], "color": "dark" }
+		],
+		"tracks_large": [
+			{ "shape": "cube", "at": [0, 66, 26], "size": [1.95, 0.36, 0.52], "color": "dark" },
+			{ "shape": "cube", "at": [0, -66, 26], "size": [1.95, 0.36, 0.52], "color": "dark" }
+		],
+		"wheels4": [
+			{ "shape": "cylinder", "at": [42, 42, 20], "size": [0.4, 0.4, 0.14], "rot": [0, 0, 90], "color": "dark" },
+			{ "shape": "cylinder", "at": [42, -42, 20], "size": [0.4, 0.4, 0.14], "rot": [0, 0, 90], "color": "dark" },
+			{ "shape": "cylinder", "at": [-42, 42, 20], "size": [0.4, 0.4, 0.14], "rot": [0, 0, 90], "color": "dark" },
+			{ "shape": "cylinder", "at": [-42, -42, 20], "size": [0.4, 0.4, 0.14], "rot": [0, 0, 90], "color": "dark" }
+		],
+		"wheels6": [
+			{ "shape": "cylinder", "at": [60, 46, 22], "size": [0.44, 0.44, 0.16], "rot": [0, 0, 90], "color": "dark" },
+			{ "shape": "cylinder", "at": [60, -46, 22], "size": [0.44, 0.44, 0.16], "rot": [0, 0, 90], "color": "dark" },
+			{ "shape": "cylinder", "at": [-10, 46, 22], "size": [0.44, 0.44, 0.16], "rot": [0, 0, 90], "color": "dark" },
+			{ "shape": "cylinder", "at": [-10, -46, 22], "size": [0.44, 0.44, 0.16], "rot": [0, 0, 90], "color": "dark" },
+			{ "shape": "cylinder", "at": [-60, 46, 22], "size": [0.44, 0.44, 0.16], "rot": [0, 0, 90], "color": "dark" },
+			{ "shape": "cylinder", "at": [-60, -46, 22], "size": [0.44, 0.44, 0.16], "rot": [0, 0, 90], "color": "dark" }
+		],
+		"truck_body": [
+			{ "shape": "cube", "at": [70, 0, 62], "size": [0.55, 0.92, 0.62], "color": "team" },
+			{ "shape": "cube", "at": [96, 0, 74], "size": [0.04, 0.8, 0.3], "color": "glass" },
+			{ "shape": "cube", "at": [-20, 0, 42], "size": [1.6, 0.95, 0.22], "color": "teamdark" }
+		],
+		"heli_frame": [
+			{ "shape": "cube", "at": [0, 0, 0], "size": [1.6, 0.55, 0.5], "color": "team" },
+			{ "shape": "sphere", "at": [62, 0, 8], "size": [0.55, 0.48, 0.42], "color": "glass" },
+			{ "shape": "cube", "at": [-115, 0, 10], "size": [1.3, 0.16, 0.16], "color": "teamdark" },
+			{ "shape": "cube", "at": [-178, 0, 38], "size": [0.32, 0.05, 0.5], "color": "team" },
+			{ "shape": "cube", "at": [-180, 14, 30], "size": [0.05, 0.05, 0.9], "color": "dark", "spin": 2000 },
+			{ "shape": "cylinder", "at": [0, 0, 32], "size": [0.12, 0.12, 0.2], "color": "metal" },
+			{ "shape": "cube", "at": [0, 0, 44], "size": [3.6, 0.13, 0.03], "color": "dark", "rotor": true },
+			{ "shape": "cube", "at": [0, 0, 44], "size": [0.13, 3.6, 0.03], "color": "dark", "rotor": true },
+			{ "shape": "cube", "at": [0, 26, -32], "size": [0.9, 0.04, 0.04], "color": "dark" },
+			{ "shape": "cube", "at": [0, -26, -32], "size": [0.9, 0.04, 0.04], "color": "dark" }
+		]
+	},
+
+	"entities": [
+		{
+			"id": "conyard", "name": "Construction Yard", "category": "structure", "buildable": false,
+			"desc": "Builds every other structure. Protect it at all costs.",
+			"cost": 2500, "health": 1600, "footprint": [3, 3], "sight": 7, "conyard": true, "produces": ["structure"], "order": 1,
+			"model": "pad3",
+			"parts": [
+				{ "shape": "cube", "at": [-60, -40, 70], "size": [3.6, 3.4, 1.3], "color": "team" },
+				{ "shape": "cube", "at": [-60, -40, 140], "size": [3.8, 3.6, 0.12], "color": "teamdark" },
+				{ "shape": "cube", "at": [-60, 132, 55], "size": [2.4, 0.1, 1.0], "color": "dark" },
+				{ "shape": "cube", "at": [-60, 136, 118], "size": [2.6, 0.1, 0.1], "color": "light" },
+				{ "shape": "cylinder", "at": [180, 150, 90], "size": [0.45, 0.45, 1.8], "color": "metal" },
+				{ "shape": "cube", "at": [110, 150, 182], "size": [2.4, 0.18, 0.18], "color": [0.85, 0.65, 0.1], "spin": 12 },
+				{ "shape": "cube", "at": [210, 150, 168], "size": [0.4, 0.4, 0.4], "color": "dark" },
+				{ "shape": "cylinder", "at": [190, -190, 130], "size": [0.35, 0.35, 2.6], "color": "metal" },
+				{ "shape": "cylinder", "at": [190, -190, 262], "size": [0.4, 0.4, 0.06], "color": "dark" }
+			]
+		},
+		{
+			"id": "power", "name": "Power Plant", "category": "structure",
+			"desc": "Generates 100 power. Everything else draws power; low power slows production and shuts down radar and powered defences.",
+			"cost": 300, "time": 8, "health": 500, "footprint": [2, 2], "power": 100, "sight": 4, "order": 2,
+			"model": "pad2",
+			"parts": [
+				{ "shape": "cube", "at": [-50, 0, 60], "size": [2.2, 3.2, 1.2], "color": "team" },
+				{ "shape": "cube", "at": [-50, 0, 124], "size": [2.3, 3.3, 0.08], "color": "teamdark" },
+				{ "shape": "cylinder", "at": [110, -80, 110], "size": [1.1, 1.1, 2.2], "color": "concrete" },
+				{ "shape": "cylinder", "at": [110, 85, 90], "size": [1.0, 1.0, 1.8], "color": "concrete" },
+				{ "shape": "cylinder", "at": [110, -80, 221], "size": [0.85, 0.85, 0.04], "color": "dark" },
+				{ "shape": "cylinder", "at": [110, 85, 181], "size": [0.75, 0.75, 0.04], "color": "dark" },
+				{ "shape": "cube", "at": [30, 0, 140], "size": [0.2, 2.8, 0.2], "color": "metal" },
+				{ "shape": "sphere", "at": [-50, 130, 100], "size": [0.2, 0.2, 0.2], "color": [0.3, 1.0, 0.4], "glow": true }
+			]
+		},
+		{
+			"id": "refinery", "name": "Ore Refinery", "category": "structure",
+			"desc": "Processes ore into credits. Comes with a free Harvester. Harvesters unload at the front dock.",
+			"cost": 1600, "time": 18, "health": 900, "footprint": [3, 3], "power": -30, "refinery": true, "free_unit": "harvester", "prereqs": ["power"], "sight": 5, "order": 3,
+			"model": "pad3",
+			"parts": [
+				{ "shape": "cylinder", "at": [-170, -160, 120], "size": [1.3, 1.3, 2.4], "color": "team" },
+				{ "shape": "cylinder", "at": [-170, 10, 100], "size": [1.2, 1.2, 2.0], "color": "team" },
+				{ "shape": "sphere", "at": [-170, -160, 240], "size": [1.3, 1.3, 0.5], "color": "teamdark" },
+				{ "shape": "cube", "at": [110, -80, 70], "size": [2.6, 3.2, 1.4], "color": "teamdark" },
+				{ "shape": "cone", "at": [110, -80, 178], "size": [1.4, 1.4, 0.75], "color": "metal" },
+				{ "shape": "cube", "at": [0, 232, 8], "size": [2.6, 1.2, 0.12], "color": "dark" },
+				{ "shape": "cube", "at": [90, 150, 60], "size": [1.2, 0.9, 1.0], "color": [0.79, 0.64, 0.15] },
+				{ "shape": "cube", "at": [-40, 60, 150], "size": [2.6, 0.2, 0.2], "color": "metal" }
+			]
+		},
+		{
+			"id": "barracks", "name": "Barracks", "category": "structure",
+			"desc": "Trains infantry.",
+			"cost": 400, "time": 8, "health": 500, "footprint": [2, 2], "power": -20, "produces": ["infantry"], "prereqs": ["power"], "sight": 5, "order": 4,
+			"model": "pad2",
+			"parts": [
+				{ "shape": "cylinder", "at": [0, -30, 30], "size": [1.5, 1.5, 3.2], "rot": [90, 0, 0], "color": "team" },
+				{ "shape": "cube", "at": [0, 45, 40], "size": [0.7, 0.1, 0.8], "color": "dark" },
+				{ "shape": "cylinder", "at": [150, 150, 100], "size": [0.06, 0.06, 2.0], "color": "metal" },
+				{ "shape": "cube", "at": [176, 150, 180], "size": [0.5, 0.04, 0.32], "color": "team" },
+				{ "shape": "cube", "at": [-110, 150, 15], "size": [1.1, 0.3, 0.3], "color": [0.42, 0.36, 0.24] },
+				{ "shape": "cube", "at": [-150, 100, 15], "size": [0.3, 0.7, 0.3], "color": [0.42, 0.36, 0.24] }
+			]
+		},
+		{
+			"id": "factory", "name": "War Factory", "category": "structure",
+			"desc": "Builds vehicles. Additional factories speed up production.",
+			"cost": 1800, "time": 20, "health": 1000, "footprint": [3, 3], "power": -30, "produces": ["vehicle"], "prereqs": ["refinery"], "sight": 5, "order": 5,
+			"model": "pad3",
+			"parts": [
+				{ "shape": "cube", "at": [0, -60, 100], "size": [5.0, 4.0, 2.0], "color": "team" },
+				{ "shape": "cube", "at": [0, -60, 206], "size": [5.2, 4.2, 0.14], "color": "teamdark" },
+				{ "shape": "cube", "at": [0, 142, 85], "size": [3.2, 0.1, 1.6], "color": "dark" },
+				{ "shape": "cube", "at": [0, 146, 176], "size": [3.4, 0.12, 0.12], "color": "light" },
+				{ "shape": "cylinder", "at": [-220, -200, 170], "size": [0.4, 0.4, 3.2], "color": "metal" },
+				{ "shape": "cube", "at": [180, -60, 240], "size": [0.6, 1.2, 0.5], "color": "metal" }
+			]
+		},
+		{
+			"id": "radar", "name": "Radar Dome", "category": "structure",
+			"desc": "Activates the tactical radar (minimap). Requires power.",
+			"cost": 1000, "time": 14, "health": 700, "footprint": [2, 2], "power": -40, "radar": true, "prereqs": ["refinery"], "sight": 10, "order": 6,
+			"model": "pad2",
+			"parts": [
+				{ "shape": "cube", "at": [0, 0, 45], "size": [2.8, 2.8, 0.9], "color": "teamdark" },
+				{ "shape": "sphere", "at": [0, 0, 120], "size": [2.2, 2.2, 1.7], "color": "concrete" },
+				{ "shape": "cylinder", "at": [0, 0, 220], "size": [0.12, 0.12, 0.8], "color": "metal" },
+				{ "shape": "cube", "at": [0, 0, 270], "size": [0.2, 1.8, 0.9], "rot": [-15, 0, 0], "color": "metal", "spin": 60 },
+				{ "shape": "cube", "at": [0, 140, 30], "size": [1.2, 0.1, 0.5], "color": "team" }
+			]
+		},
+		{
+			"id": "helipad", "name": "Helipad", "category": "structure",
+			"desc": "Builds and services aircraft.",
+			"cost": 1200, "time": 14, "health": 600, "footprint": [2, 2], "power": -20, "produces": ["aircraft"], "prereqs": ["radar", "factory"], "sight": 6, "order": 7,
+			"parts": [
+				{ "shape": "cube", "at": [0, 0, 6], "size": [3.92, 3.92, 0.12], "color": [0.12, 0.12, 0.12] },
+				{ "shape": "cube", "at": [-45, 0, 14], "size": [0.16, 1.3, 0.02], "color": "light" },
+				{ "shape": "cube", "at": [45, 0, 14], "size": [0.16, 1.3, 0.02], "color": "light" },
+				{ "shape": "cube", "at": [0, 0, 14], "size": [0.9, 0.16, 0.02], "color": "light" },
+				{ "shape": "cube", "at": [-160, -160, 60], "size": [0.5, 0.5, 1.2], "color": "team" },
+				{ "shape": "sphere", "at": [-160, -160, 132], "size": [0.25, 0.25, 0.25], "color": [1.0, 0.1, 0.05], "glow": true },
+				{ "shape": "sphere", "at": [160, 160, 20], "size": [0.15, 0.15, 0.15], "color": [0.1, 1.0, 0.2], "glow": true },
+				{ "shape": "sphere", "at": [-160, 160, 20], "size": [0.15, 0.15, 0.15], "color": [0.1, 1.0, 0.2], "glow": true }
+			]
+		},
+		{
+			"id": "techcenter", "name": "Tech Center", "category": "structure",
+			"desc": "Unlocks elite units, the MCV and advanced defences.",
+			"cost": 1500, "time": 18, "health": 600, "footprint": [2, 2], "power": -100, "prereqs": ["factory", "radar"], "sight": 5, "order": 8,
+			"model": "pad2",
+			"parts": [
+				{ "shape": "cube", "at": [0, 0, 80], "size": [3.0, 3.0, 1.6], "color": "team" },
+				{ "shape": "sphere", "at": [0, 0, 170], "size": [2.2, 2.2, 1.4], "color": "glass" },
+				{ "shape": "cylinder", "at": [120, -120, 210], "size": [0.08, 0.08, 2.6], "color": "metal" },
+				{ "shape": "sphere", "at": [120, -120, 340], "size": [0.18, 0.18, 0.18], "color": [1.0, 0.2, 0.1], "glow": true },
+				{ "shape": "cube", "at": [0, 152, 50], "size": [1.6, 0.06, 0.8], "color": "dark" }
+			]
+		},
+
+		{
+			"id": "pillbox", "name": "Pillbox", "faction": "concord", "category": "structure",
+			"desc": "Concrete machine-gun nest. Shreds infantry.",
+			"cost": 400, "time": 8, "health": 450, "footprint": [1, 1], "weapon": "pillbox_mg", "muzzle": [90, 0, 45], "prereqs": ["barracks"], "sight": 6, "height": 90, "order": 20,
+			"parts": [
+				{ "shape": "cylinder", "at": [0, 0, 30], "size": [1.6, 1.6, 0.6], "color": "concrete" },
+				{ "shape": "cylinder", "at": [0, 0, 62], "size": [1.4, 1.4, 0.08], "color": "teamdark" },
+				{ "shape": "cube", "at": [55, 0, 45], "size": [0.6, 0.07, 0.07], "color": "dark", "turret": true },
+				{ "shape": "cube", "at": [-60, 50, 12], "size": [0.6, 0.3, 0.24], "color": [0.42, 0.36, 0.24] }
+			]
+		},
+		{
+			"id": "sentinel", "name": "Sentinel Gun Turret", "faction": "concord", "category": "structure",
+			"desc": "Rotating 90mm anti-tank turret.",
+			"cost": 600, "time": 10, "health": 550, "footprint": [1, 1], "weapon": "turret_cannon", "muzzle": [140, 0, 72], "prereqs": ["factory"], "sight": 7, "height": 110, "turn": 120, "order": 21,
+			"parts": [
+				{ "shape": "cube", "at": [0, 0, 25], "size": [1.7, 1.7, 0.5], "color": "concrete" },
+				{ "shape": "cylinder", "at": [0, 0, 70], "size": [1.1, 1.1, 0.45], "color": "team", "turret": true },
+				{ "shape": "cube", "at": [-30, 0, 90], "size": [0.5, 0.8, 0.2], "color": "teamdark", "turret": true },
+				{ "shape": "cylinder", "at": [85, 0, 72], "size": [0.14, 0.14, 1.1], "rot": [90, 0, 0], "color": "metal", "turret": true }
+			]
+		},
+		{
+			"id": "skyguard", "name": "Skyguard AA Battery", "faction": "concord", "category": "structure",
+			"desc": "Radar-guided flak. Anti-aircraft only. Requires power.",
+			"cost": 800, "time": 12, "health": 450, "footprint": [1, 1], "weapon": "flak", "muzzle": [70, 0, 140], "prereqs": ["radar"], "power": -20, "requires_power": true, "sight": 8, "height": 120, "turn": 180, "order": 22,
+			"parts": [
+				{ "shape": "cube", "at": [0, 0, 20], "size": [1.7, 1.7, 0.4], "color": "concrete" },
+				{ "shape": "cylinder", "at": [0, 0, 60], "size": [0.9, 0.9, 0.4], "color": "team", "turret": true },
+				{ "shape": "cylinder", "at": [40, 18, 105], "size": [0.08, 0.08, 1.0], "rot": [-45, 0, 0], "color": "metal", "turret": true },
+				{ "shape": "cylinder", "at": [40, -18, 105], "size": [0.08, 0.08, 1.0], "rot": [-45, 0, 0], "color": "metal", "turret": true },
+				{ "shape": "cube", "at": [-30, 0, 95], "size": [0.4, 0.6, 0.4], "color": "teamdark", "turret": true }
+			]
+		},
+		{
+			"id": "bunker", "name": "Flame Bunker", "faction": "pact", "category": "structure",
+			"desc": "Buried bunker with a flame projector. Lethal to infantry and light vehicles.",
+			"cost": 450, "time": 8, "health": 520, "footprint": [1, 1], "weapon": "flame_tower", "muzzle": [90, 0, 50], "prereqs": ["barracks"], "sight": 6, "height": 90, "order": 30,
+			"parts": [
+				{ "shape": "sphere", "at": [0, 0, 18], "size": [1.75, 1.75, 0.9], "color": "concrete" },
+				{ "shape": "cylinder", "at": [50, 0, 48], "size": [0.24, 0.24, 0.6], "rot": [90, 0, 0], "color": "dark", "turret": true },
+				{ "shape": "cylinder", "at": [-45, 40, 50], "size": [0.4, 0.4, 0.6], "color": "team" },
+				{ "shape": "cylinder", "at": [-45, -40, 50], "size": [0.4, 0.4, 0.6], "color": "team" }
+			]
+		},
+		{
+			"id": "flakcannon", "name": "Flak Cannon", "faction": "pact", "category": "structure",
+			"desc": "Heavy anti-aircraft gun. Requires power.",
+			"cost": 700, "time": 11, "health": 500, "footprint": [1, 1], "weapon": "flak", "muzzle": [90, 0, 150], "prereqs": ["radar"], "power": -20, "requires_power": true, "sight": 8, "height": 120, "turn": 160, "order": 31,
+			"parts": [
+				{ "shape": "cube", "at": [0, 0, 20], "size": [1.7, 1.7, 0.4], "color": "concrete" },
+				{ "shape": "cube", "at": [0, 0, 62], "size": [0.9, 0.9, 0.5], "color": "team", "turret": true },
+				{ "shape": "cylinder", "at": [45, 0, 110], "size": [0.13, 0.13, 1.3], "rot": [-50, 0, 0], "color": "metal", "turret": true }
+			]
+		},
+		{
+			"id": "arctower", "name": "Arc Tower", "faction": "pact", "category": "structure",
+			"desc": "Fires devastating bolts of electricity. Requires a lot of power.",
+			"cost": 1200, "time": 16, "health": 650, "footprint": [1, 1], "weapon": "arc", "muzzle": [0, 0, 285], "prereqs": ["techcenter"], "power": -75, "requires_power": true, "sight": 8, "height": 300, "order": 32,
+			"parts": [
+				{ "shape": "cube", "at": [0, 0, 30], "size": [1.5, 1.5, 0.6], "color": "concrete" },
+				{ "shape": "cylinder", "at": [0, 0, 150], "size": [0.5, 0.5, 2.2], "color": "metal" },
+				{ "shape": "cylinder", "at": [0, 0, 110], "size": [0.95, 0.95, 0.12], "color": "team" },
+				{ "shape": "cylinder", "at": [0, 0, 170], "size": [0.85, 0.85, 0.12], "color": "team" },
+				{ "shape": "cylinder", "at": [0, 0, 230], "size": [0.75, 0.75, 0.12], "color": "team" },
+				{ "shape": "sphere", "at": [0, 0, 285], "size": [0.6, 0.6, 0.6], "color": [0.45, 0.8, 1.0], "glow": true, "spin": 90 }
+			]
+		},
+
+		{
+			"id": "rifle", "name": "Rifleman", "category": "infantry",
+			"desc": "Basic infantry. Cheap, quick to train, good against other infantry.",
+			"cost": 100, "time": 5, "health": 60, "armor": "none", "speed": 1.6, "sight": 5, "weapon": "rifle", "muzzle": [38, 9, 52], "prereqs": ["barracks"], "order": 40,
+			"model": ["soldier", "rifle_arms"]
+		},
+		{
+			"id": "rocket", "name": "Rocket Soldier", "category": "infantry",
+			"desc": "Anti-armour infantry. Rockets also hit aircraft.",
+			"cost": 300, "time": 7, "health": 50, "armor": "none", "speed": 1.4, "sight": 5, "weapon": "rocket", "muzzle": [36, 12, 74], "prereqs": ["barracks"], "order": 41,
+			"model": "soldier",
+			"parts": [ { "shape": "cylinder", "at": [6, 12, 70], "size": [0.11, 0.11, 0.7], "rot": [90, 0, 0], "color": [0.25, 0.3, 0.2] } ]
+		},
+		{
+			"id": "engineer", "name": "Engineer", "category": "infantry",
+			"desc": "Captures enemy and neutral structures, or fully repairs your own. Unarmed.",
+			"cost": 500, "time": 8, "health": 40, "armor": "none", "speed": 1.6, "sight": 4, "engineer": true, "prereqs": ["barracks"], "order": 42,
+			"parts": [
+				{ "shape": "cube", "at": [0, 0, 18], "size": [0.16, 0.22, 0.36], "color": "teamdark" },
+				{ "shape": "cylinder", "at": [0, 0, 50], "size": [0.3, 0.3, 0.32], "color": "team" },
+				{ "shape": "sphere", "at": [0, 0, 77], "size": [0.19, 0.19, 0.19], "color": [0.78, 0.58, 0.44] },
+				{ "shape": "sphere", "at": [0, 0, 84], "size": [0.24, 0.24, 0.13], "color": "yellow" },
+				{ "shape": "cube", "at": [-15, 0, 55], "size": [0.14, 0.26, 0.3], "color": [0.35, 0.3, 0.2] }
+			]
+		},
+		{
+			"id": "ranger", "name": "Ranger Sniper", "faction": "concord", "category": "infantry",
+			"desc": "Elite marksman. Kills infantry from beyond their range.",
+			"cost": 600, "time": 10, "health": 70, "armor": "none", "speed": 1.7, "sight": 8, "weapon": "sniper", "muzzle": [50, 9, 52], "prereqs": ["barracks", "techcenter"], "order": 43,
+			"parts": [
+				{ "shape": "cube", "at": [0, 0, 18], "size": [0.16, 0.22, 0.36], "color": [0.18, 0.22, 0.14] },
+				{ "shape": "cylinder", "at": [0, 0, 50], "size": [0.3, 0.3, 0.32], "color": [0.22, 0.28, 0.16] },
+				{ "shape": "sphere", "at": [0, 0, 77], "size": [0.19, 0.19, 0.19], "color": [0.78, 0.58, 0.44] },
+				{ "shape": "cube", "at": [0, 0, 86], "size": [0.24, 0.24, 0.06], "color": "team" },
+				{ "shape": "cube", "at": [22, 9, 52], "size": [0.7, 0.04, 0.05], "color": "dark" }
+			]
+		},
+		{
+			"id": "flamer", "name": "Flame Trooper", "faction": "pact", "category": "infantry",
+			"desc": "Short-ranged flamethrower. Burns infantry and structures.",
+			"cost": 300, "time": 7, "health": 70, "armor": "none", "speed": 1.4, "sight": 4, "weapon": "flamer", "muzzle": [36, 9, 50], "prereqs": ["barracks"], "order": 44,
+			"model": "soldier",
+			"parts": [
+				{ "shape": "cylinder", "at": [-16, 0, 56], "size": [0.2, 0.2, 0.36], "color": "orange" },
+				{ "shape": "cube", "at": [16, 9, 50], "size": [0.4, 0.07, 0.07], "color": "dark" }
+			]
+		},
+		{
+			"id": "shock", "name": "Shock Trooper", "faction": "pact", "category": "infantry",
+			"desc": "Carries a portable arc projector. Fries infantry and armour alike.",
+			"cost": 600, "time": 10, "health": 90, "armor": "none", "speed": 1.4, "sight": 5, "weapon": "shock", "muzzle": [34, 9, 56], "prereqs": ["barracks", "techcenter"], "order": 45,
+			"model": "soldier",
+			"parts": [
+				{ "shape": "cube", "at": [-16, 0, 56], "size": [0.16, 0.3, 0.36], "color": "metal" },
+				{ "shape": "sphere", "at": [-18, 0, 80], "size": [0.14, 0.14, 0.14], "color": [0.45, 0.8, 1.0], "glow": true },
+				{ "shape": "cube", "at": [16, 9, 54], "size": [0.38, 0.07, 0.07], "color": [0.3, 0.5, 0.7] }
+			]
+		},
+		{
+			"id": "scientist", "name": "Dr. Ilse Varga", "category": "infantry", "buildable": false,
+			"desc": "Architect of the Aurora project.",
+			"cost": 0, "health": 120, "armor": "none", "speed": 1.5, "sight": 4, "order": 46,
+			"parts": [
+				{ "shape": "cube", "at": [0, 0, 18], "size": [0.16, 0.22, 0.36], "color": [0.15, 0.15, 0.18] },
+				{ "shape": "cylinder", "at": [0, 0, 50], "size": [0.32, 0.32, 0.34], "color": [0.92, 0.92, 0.9] },
+				{ "shape": "sphere", "at": [0, 0, 78], "size": [0.19, 0.19, 0.19], "color": [0.85, 0.66, 0.52] },
+				{ "shape": "sphere", "at": [-3, 0, 85], "size": [0.2, 0.2, 0.12], "color": [0.55, 0.4, 0.2] }
+			]
+		},
+		{
+			"id": "volkova", "name": "Marshal Katya Volkova", "faction": "pact", "category": "infantry", "buildable": false,
+			"desc": "Field Marshal of the Iron Pact armies.",
+			"cost": 0, "health": 400, "armor": "none", "speed": 1.7, "sight": 7, "weapon": "pistol", "muzzle": [30, 9, 52], "order": 47,
+			"parts": [
+				{ "shape": "cube", "at": [0, 0, 18], "size": [0.16, 0.22, 0.36], "color": [0.1, 0.1, 0.1] },
+				{ "shape": "cylinder", "at": [0, 0, 52], "size": [0.34, 0.34, 0.4], "color": [0.28, 0.3, 0.26] },
+				{ "shape": "cube", "at": [0, 0, 64], "size": [0.36, 0.36, 0.06], "color": "team" },
+				{ "shape": "sphere", "at": [0, 0, 80], "size": [0.19, 0.19, 0.19], "color": [0.86, 0.68, 0.56] },
+				{ "shape": "cylinder", "at": [0, 0, 92], "size": [0.26, 0.26, 0.06], "color": [0.28, 0.3, 0.26] },
+				{ "shape": "cube", "at": [10, 0, 94], "size": [0.12, 0.2, 0.04], "color": "team" }
+			]
+		},
+		{
+			"id": "hale", "name": "General Adrian Hale", "faction": "concord", "category": "infantry", "buildable": false,
+			"desc": "Commander of Concord forces in the Eastern Theatre.",
+			"cost": 0, "health": 400, "armor": "none", "speed": 1.6, "sight": 7, "weapon": "pistol", "muzzle": [30, 9, 52], "order": 48,
+			"parts": [
+				{ "shape": "cube", "at": [0, 0, 18], "size": [0.16, 0.22, 0.36], "color": [0.2, 0.18, 0.14] },
+				{ "shape": "cylinder", "at": [0, 0, 52], "size": [0.34, 0.34, 0.4], "color": [0.35, 0.33, 0.22] },
+				{ "shape": "sphere", "at": [0, 0, 80], "size": [0.19, 0.19, 0.19], "color": [0.86, 0.68, 0.56] },
+				{ "shape": "cube", "at": [0, 0, 89], "size": [0.26, 0.24, 0.08], "color": "team" }
+			]
+		},
+
+		{
+			"id": "harvester", "name": "Ore Harvester", "category": "vehicle",
+			"desc": "Collects ore and gems and delivers them to a Refinery. Unarmed but tough.",
+			"cost": 1400, "time": 14, "health": 650, "armor": "heavy", "speed": 1.15, "turn": 120, "sight": 4, "harvester": true, "capacity": 28, "prereqs": ["refinery"], "radius": 85, "height": 140, "order": 60,
+			"model": "tracks_large",
+			"parts": [
+				{ "shape": "cube", "at": [0, 0, 55], "size": [1.9, 1.2, 0.6], "color": "team" },
+				{ "shape": "cube", "at": [75, 0, 100], "size": [0.5, 1.0, 0.5], "color": "teamdark" },
+				{ "shape": "cube", "at": [101, 0, 108], "size": [0.04, 0.8, 0.26], "color": "glass" },
+				{ "shape": "cube", "at": [-30, 0, 108], "size": [1.1, 1.15, 0.5], "color": "metal" },
+				{ "shape": "cube", "at": [-30, 0, 132], "size": [1.0, 1.05, 0.04], "color": [0.79, 0.64, 0.15] },
+				{ "shape": "cylinder", "at": [118, 0, 40], "size": [0.4, 0.4, 1.2], "rot": [0, 0, 90], "color": "metal", "spin": 0 }
+			]
+		},
+		{
+			"id": "mcv", "name": "Mobile Construction Vehicle", "category": "vehicle",
+			"desc": "Deploys (D) into a Construction Yard. Use it to establish a new base.",
+			"cost": 2500, "time": 25, "health": 1000, "armor": "heavy", "speed": 0.95, "turn": 90, "sight": 5, "deploys_into": "conyard", "prereqs": ["factory", "techcenter"], "radius": 100, "height": 160, "order": 61,
+			"model": "tracks_large",
+			"parts": [
+				{ "shape": "cube", "at": [-10, 0, 62], "size": [2.4, 1.3, 0.7], "color": "team" },
+				{ "shape": "cube", "at": [105, 0, 115], "size": [0.5, 1.2, 0.55], "color": "teamdark" },
+				{ "shape": "cube", "at": [131, 0, 124], "size": [0.04, 1.0, 0.28], "color": "glass" },
+				{ "shape": "cube", "at": [-45, 0, 125], "size": [1.4, 1.1, 0.6], "color": "teamdark" },
+				{ "shape": "cube", "at": [-30, 0, 172], "size": [1.8, 0.24, 0.2], "color": [0.85, 0.65, 0.1] },
+				{ "shape": "cylinder", "at": [-110, 0, 172], "size": [0.3, 0.3, 0.3], "color": "metal" }
+			]
+		},
+		{
+			"id": "jeep", "name": "Pathfinder Jeep", "faction": "concord", "category": "vehicle",
+			"desc": "Fast scout with a mounted machine gun. Great for spotting and hunting infantry.",
+			"cost": 500, "time": 8, "health": 170, "armor": "light", "speed": 3.6, "turn": 300, "sight": 8, "weapon": "mg", "muzzle": [48, 0, 80], "prereqs": ["factory"], "radius": 60, "height": 100, "order": 62,
+			"model": "wheels4",
+			"parts": [
+				{ "shape": "cube", "at": [0, 0, 42], "size": [1.25, 0.8, 0.3], "color": "team" },
+				{ "shape": "cube", "at": [45, 0, 62], "size": [0.06, 0.7, 0.2], "color": "glass" },
+				{ "shape": "cylinder", "at": [-10, 0, 66], "size": [0.22, 0.22, 0.3], "color": "metal", "turret": true },
+				{ "shape": "cube", "at": [16, 0, 80], "size": [0.52, 0.05, 0.05], "color": "dark", "turret": true }
+			]
+		},
+		{
+			"id": "lancer", "name": "Lancer Light Tank", "faction": "concord", "category": "vehicle",
+			"desc": "Quick, cheap light tank. Effective in numbers.",
+			"cost": 700, "time": 10, "health": 300, "armor": "heavy", "speed": 2.6, "turn": 200, "sight": 6, "weapon": "cannon_light", "muzzle": [102, 0, 64], "prereqs": ["factory"], "radius": 68, "order": 63,
+			"model": "tracks_small",
+			"parts": [
+				{ "shape": "cube", "at": [0, 0, 36], "size": [1.4, 0.95, 0.34], "color": "team" },
+				{ "shape": "cube", "at": [66, 0, 32], "size": [0.12, 0.85, 0.22], "color": "teamdark" },
+				{ "shape": "cylinder", "at": [-10, 0, 62], "size": [0.66, 0.66, 0.26], "color": "team", "turret": true },
+				{ "shape": "cylinder", "at": [55, 0, 64], "size": [0.1, 0.1, 0.9], "rot": [90, 0, 0], "color": "metal", "turret": true }
+			]
+		},
+		{
+			"id": "warden", "name": "Warden Battle Tank", "faction": "concord", "category": "vehicle",
+			"desc": "The backbone of the Concord armoured corps.",
+			"cost": 950, "time": 13, "health": 460, "armor": "heavy", "speed": 2.0, "turn": 160, "sight": 6, "weapon": "cannon_med", "muzzle": [138, 0, 78], "prereqs": ["factory"], "radius": 76, "order": 64,
+			"model": "tracks_medium",
+			"parts": [
+				{ "shape": "cube", "at": [0, 0, 42], "size": [1.65, 1.1, 0.42], "color": "team" },
+				{ "shape": "cube", "at": [78, 0, 36], "size": [0.14, 1.0, 0.28], "color": "teamdark" },
+				{ "shape": "cylinder", "at": [-15, 0, 76], "size": [0.82, 0.82, 0.32], "color": "team", "turret": true },
+				{ "shape": "cube", "at": [26, 0, 77], "size": [0.3, 0.5, 0.26], "color": "teamdark", "turret": true },
+				{ "shape": "cylinder", "at": [82, 0, 78], "size": [0.12, 0.12, 1.1], "rot": [90, 0, 0], "color": "metal", "turret": true },
+				{ "shape": "cylinder", "at": [-30, 25, 100], "size": [0.1, 0.1, 0.12], "color": "dark", "turret": true }
+			]
+		},
+		{
+			"id": "longbow", "name": "Longbow Artillery", "faction": "concord", "category": "vehicle",
+			"desc": "Long-range howitzer. Devastating against structures and massed troops; cannot fire at close range.",
+			"cost": 800, "time": 12, "health": 200, "armor": "light", "speed": 1.6, "turn": 140, "sight": 6, "weapon": "artillery", "muzzle": [125, 0, 130], "prereqs": ["factory", "radar"], "radius": 70, "order": 65,
+			"model": "tracks_small",
+			"parts": [
+				{ "shape": "cube", "at": [0, 0, 36], "size": [1.5, 1.0, 0.34], "color": "team" },
+				{ "shape": "cube", "at": [-30, 0, 72], "size": [0.75, 0.7, 0.32], "color": "teamdark", "turret": true },
+				{ "shape": "cylinder", "at": [50, 0, 100], "size": [0.13, 0.13, 1.6], "rot": [-70, 0, 0], "color": "metal", "turret": true },
+				{ "shape": "cylinder", "at": [8, 0, 86], "size": [0.22, 0.22, 0.4], "rot": [-70, 0, 0], "color": "dark", "turret": true }
+			]
+		},
+		{
+			"id": "skytrack", "name": "Skyguard Flak Track", "faction": "concord", "category": "vehicle",
+			"desc": "Mobile anti-aircraft escort.",
+			"cost": 600, "time": 10, "health": 220, "armor": "light", "speed": 2.4, "turn": 200, "sight": 8, "weapon": "flak", "muzzle": [60, 0, 120], "prereqs": ["factory", "radar"], "radius": 66, "order": 66,
+			"model": "tracks_small",
+			"parts": [
+				{ "shape": "cube", "at": [0, 0, 38], "size": [1.4, 0.95, 0.36], "color": "team" },
+				{ "shape": "cylinder", "at": [-10, 0, 66], "size": [0.6, 0.6, 0.24], "color": "teamdark", "turret": true },
+				{ "shape": "cylinder", "at": [25, 14, 95], "size": [0.07, 0.07, 0.8], "rot": [-45, 0, 0], "color": "metal", "turret": true },
+				{ "shape": "cylinder", "at": [25, -14, 95], "size": [0.07, 0.07, 0.8], "rot": [-45, 0, 0], "color": "metal", "turret": true }
+			]
+		},
+		{
+			"id": "wolf", "name": "Wolf Scout Car", "faction": "pact", "category": "vehicle",
+			"desc": "Armoured car with a heavy machine gun.",
+			"cost": 450, "time": 8, "health": 200, "armor": "light", "speed": 3.2, "turn": 280, "sight": 7, "weapon": "mg", "muzzle": [55, 0, 92], "prereqs": ["factory"], "radius": 64, "height": 110, "order": 70,
+			"model": "wheels6",
+			"parts": [
+				{ "shape": "cube", "at": [0, 0, 50], "size": [1.4, 0.85, 0.42], "color": "team" },
+				{ "shape": "cube", "at": [60, 0, 44], "size": [0.3, 0.8, 0.26], "rot": [30, 0, 0], "color": "teamdark" },
+				{ "shape": "cylinder", "at": [-10, 0, 80], "size": [0.4, 0.4, 0.2], "color": "teamdark", "turret": true },
+				{ "shape": "cube", "at": [22, 0, 92], "size": [0.6, 0.06, 0.06], "color": "dark", "turret": true }
+			]
+		},
+		{
+			"id": "bear", "name": "Bear Heavy Tank", "faction": "pact", "category": "vehicle",
+			"desc": "Slow, heavily armoured twin-barrelled tank.",
+			"cost": 1150, "time": 15, "health": 620, "armor": "heavy", "speed": 1.7, "turn": 130, "sight": 6, "weapon": "cannon_heavy", "muzzle": [148, 0, 86], "prereqs": ["factory"], "radius": 84, "height": 130, "order": 71,
+			"model": "tracks_large",
+			"parts": [
+				{ "shape": "cube", "at": [0, 0, 46], "size": [1.85, 1.22, 0.46], "color": "team" },
+				{ "shape": "cube", "at": [88, 0, 40], "size": [0.2, 1.1, 0.32], "rot": [-20, 0, 0], "color": "teamdark" },
+				{ "shape": "cylinder", "at": [-20, 0, 84], "size": [0.98, 0.98, 0.38], "color": "team", "turret": true },
+				{ "shape": "cylinder", "at": [-20, 0, 106], "size": [0.6, 0.6, 0.1], "color": "teamdark", "turret": true },
+				{ "shape": "cylinder", "at": [86, 15, 86], "size": [0.11, 0.11, 1.2], "rot": [90, 0, 0], "color": "metal", "turret": true },
+				{ "shape": "cylinder", "at": [86, -15, 86], "size": [0.11, 0.11, 1.2], "rot": [90, 0, 0], "color": "metal", "turret": true }
+			]
+		},
+		{
+			"id": "thunder", "name": "Thunder Rocket Launcher", "faction": "pact", "category": "vehicle",
+			"desc": "Truck-mounted rocket battery. Saturates an area with explosive rockets.",
+			"cost": 900, "time": 12, "health": 200, "armor": "light", "speed": 1.9, "turn": 160, "sight": 6, "weapon": "mlrs", "muzzle": [20, 0, 125], "prereqs": ["factory", "radar"], "radius": 72, "height": 120, "order": 72,
+			"model": ["wheels6", "truck_body"],
+			"parts": [
+				{ "shape": "cube", "at": [-30, 0, 98], "size": [1.05, 0.85, 0.4], "rot": [20, 0, 0], "color": "metal", "turret": true },
+				{ "shape": "cube", "at": [8, 0, 112], "size": [0.04, 0.75, 0.32], "rot": [20, 0, 0], "color": "dark", "turret": true }
+			]
+		},
+		{
+			"id": "titan", "name": "Titan Siege Tank", "faction": "pact", "category": "vehicle",
+			"desc": "A fortress on treads. Enormous armour and twin siege guns.",
+			"cost": 2100, "time": 24, "health": 1150, "armor": "heavy", "speed": 1.1, "turn": 90, "sight": 7, "weapon": "titan_cannon", "muzzle": [195, 0, 110], "prereqs": ["factory", "techcenter"], "radius": 112, "height": 170, "order": 73,
+			"parts": [
+				{ "shape": "cube", "at": [0, 88, 32], "size": [2.5, 0.45, 0.62], "color": "dark" },
+				{ "shape": "cube", "at": [0, -88, 32], "size": [2.5, 0.45, 0.62], "color": "dark" },
+				{ "shape": "cube", "at": [0, 0, 55], "size": [2.4, 1.6, 0.6], "color": "team" },
+				{ "shape": "cube", "at": [118, 0, 48], "size": [0.2, 1.5, 0.4], "rot": [-25, 0, 0], "color": "teamdark" },
+				{ "shape": "cube", "at": [-20, 0, 108], "size": [1.35, 1.25, 0.48], "color": "team", "turret": true },
+				{ "shape": "cube", "at": [-20, 0, 136], "size": [0.8, 0.7, 0.1], "color": "teamdark", "turret": true },
+				{ "shape": "cylinder", "at": [110, 24, 110], "size": [0.16, 0.16, 1.6], "rot": [90, 0, 0], "color": "metal", "turret": true },
+				{ "shape": "cylinder", "at": [110, -24, 110], "size": [0.16, 0.16, 1.6], "rot": [90, 0, 0], "color": "metal", "turret": true },
+				{ "shape": "cube", "at": [-30, 75, 120], "size": [0.6, 0.26, 0.3], "color": "teamdark", "turret": true },
+				{ "shape": "cube", "at": [-30, -75, 120], "size": [0.6, 0.26, 0.3], "color": "teamdark", "turret": true }
+			]
+		},
+		{
+			"id": "flaktruck", "name": "Flak Truck", "faction": "pact", "category": "vehicle",
+			"desc": "Mobile anti-aircraft gun on a truck chassis.",
+			"cost": 600, "time": 10, "health": 220, "armor": "light", "speed": 2.4, "turn": 200, "sight": 8, "weapon": "flak", "muzzle": [50, 0, 130], "prereqs": ["factory", "radar"], "radius": 70, "height": 120, "order": 74,
+			"model": ["wheels6", "truck_body"],
+			"parts": [
+				{ "shape": "cylinder", "at": [-30, 0, 70], "size": [0.6, 0.6, 0.25], "color": "teamdark", "turret": true },
+				{ "shape": "cylinder", "at": [5, 0, 100], "size": [0.12, 0.12, 1.1], "rot": [-50, 0, 0], "color": "metal", "turret": true }
+			]
+		},
+		{
+			"id": "truck", "name": "Supply Truck", "category": "vehicle", "buildable": false,
+			"desc": "Unarmed transport.",
+			"cost": 0, "health": 260, "armor": "light", "speed": 2.2, "turn": 200, "sight": 5, "radius": 70, "height": 120, "order": 75,
+			"model": ["wheels6", "truck_body"],
+			"parts": [
+				{ "shape": "cube", "at": [-25, 0, 92], "size": [1.4, 0.95, 0.8], "color": [0.35, 0.36, 0.25] }
+			]
+		},
+
+		{
+			"id": "hawk", "name": "Hawk Gunship", "faction": "concord", "category": "aircraft",
+			"desc": "Attack helicopter armed with anti-armour rockets. Ignores terrain.",
+			"cost": 1200, "time": 15, "health": 260, "armor": "aircraft", "speed": 4.5, "turn": 220, "sight": 8, "weapon": "heli_rockets", "muzzle": [40, 0, -30], "prereqs": ["helipad"], "fly_height": 450, "radius": 95, "height": 80, "order": 80,
+			"model": "heli_frame"
+		},
+		{
+			"id": "vulture", "name": "Vulture Attack Copter", "faction": "pact", "category": "aircraft",
+			"desc": "Heavily armoured gunship with a rotary chaingun. Murderous against infantry.",
+			"cost": 1200, "time": 15, "health": 320, "armor": "aircraft", "speed": 4.0, "turn": 200, "sight": 8, "weapon": "heli_chaingun", "muzzle": [90, 0, -30], "prereqs": ["helipad"], "fly_height": 420, "radius": 100, "height": 80, "order": 81,
+			"model": "heli_frame",
+			"parts": [
+				{ "shape": "cube", "at": [0, 0, -14], "size": [0.4, 1.7, 0.08], "color": "teamdark" },
+				{ "shape": "cylinder", "at": [60, 0, -30], "size": [0.1, 0.1, 0.6], "rot": [90, 0, 0], "color": "dark" }
+			]
+		},
+
+		{
+			"id": "derrick", "name": "Oil Derrick", "faction": "neutral", "category": "structure", "buildable": false,
+			"desc": "Capture with an Engineer to receive $150 every 10 seconds.",
+			"cost": 1000, "health": 700, "footprint": [2, 2], "income": 150, "sight": 4, "ignore_for_victory": true, "order": 90,
+			"parts": [
+				{ "shape": "cube", "at": [0, 0, 4], "size": [3.9, 3.9, 0.08], "color": [0.1, 0.09, 0.07] },
+				{ "shape": "cone", "at": [-30, -30, 150], "size": [1.5, 1.5, 3.0], "color": "metal" },
+				{ "shape": "cube", "at": [40, -30, 200], "size": [1.8, 0.18, 0.18], "color": "dark" },
+				{ "shape": "cylinder", "at": [100, 100, 60], "size": [0.9, 0.9, 1.2], "color": "team" },
+				{ "shape": "cylinder", "at": [-110, 120, 30], "size": [0.35, 0.35, 0.6], "color": [0.5, 0.15, 0.05] },
+				{ "shape": "cylinder", "at": [-60, 140, 30], "size": [0.35, 0.35, 0.6], "color": [0.5, 0.15, 0.05] }
+			]
+		},
+		{
+			"id": "farmhouse", "name": "Farmhouse", "faction": "neutral", "category": "structure", "buildable": false,
+			"desc": "Civilian home.",
+			"cost": 0, "health": 350, "footprint": [2, 2], "sight": 2, "capturable": false, "ignore_for_victory": true, "order": 91,
+			"parts": [
+				{ "shape": "cube", "at": [0, 0, 70], "size": [3.0, 2.4, 1.4], "color": [0.72, 0.68, 0.58] },
+				{ "shape": "cube", "at": [0, -55, 168], "size": [3.2, 1.45, 0.14], "rot": [0, 0, 32], "color": [0.42, 0.14, 0.09] },
+				{ "shape": "cube", "at": [0, 55, 168], "size": [3.2, 1.45, 0.14], "rot": [0, 0, -32], "color": [0.42, 0.14, 0.09] },
+				{ "shape": "cube", "at": [100, -40, 210], "size": [0.3, 0.3, 0.8], "color": [0.4, 0.3, 0.25] },
+				{ "shape": "cube", "at": [-40, 121, 50], "size": [0.4, 0.04, 0.8], "color": [0.3, 0.2, 0.1] },
+				{ "shape": "cube", "at": [60, 121, 85], "size": [0.4, 0.04, 0.35], "color": "glass" }
+			]
+		},
+		{
+			"id": "church", "name": "Old Church", "faction": "neutral", "category": "structure", "buildable": false,
+			"desc": "Civilian landmark.",
+			"cost": 0, "health": 600, "footprint": [2, 2], "sight": 2, "capturable": false, "ignore_for_victory": true, "order": 92,
+			"parts": [
+				{ "shape": "cube", "at": [0, 30, 80], "size": [2.2, 2.8, 1.6], "color": [0.68, 0.66, 0.6] },
+				{ "shape": "cube", "at": [0, -110, 160], "size": [1.2, 1.2, 3.2], "color": [0.68, 0.66, 0.6] },
+				{ "shape": "cone", "at": [0, -110, 360], "size": [1.3, 1.3, 1.2], "color": [0.25, 0.3, 0.32] },
+				{ "shape": "cube", "at": [0, 30, 175], "size": [2.4, 3.0, 0.2], "color": [0.3, 0.2, 0.15] }
+			]
+		},
+		{
+			"id": "radiostation", "name": "Kessel Radio Station", "faction": "neutral", "category": "structure", "buildable": false,
+			"desc": "Civilian broadcast station - the town's only link to the outside world.",
+			"cost": 0, "health": 900, "footprint": [2, 2], "sight": 6, "capturable": false, "order": 93,
+			"parts": [
+				{ "shape": "cube", "at": [20, 40, 60], "size": [3.0, 2.2, 1.2], "color": "concrete" },
+				{ "shape": "cube", "at": [20, 151, 70], "size": [3.0, 0.06, 0.2], "color": "team" },
+				{ "shape": "cylinder", "at": [-110, -110, 250], "size": [0.14, 0.14, 5.0], "color": "metal" },
+				{ "shape": "cube", "at": [-110, -110, 420], "size": [0.9, 0.06, 0.06], "color": "metal" },
+				{ "shape": "cube", "at": [-110, -110, 340], "size": [0.06, 0.9, 0.06], "color": "metal" },
+				{ "shape": "sphere", "at": [-110, -110, 505], "size": [0.22, 0.22, 0.22], "color": [1.0, 0.1, 0.05], "glow": true }
+			]
+		},
+		{
+			"id": "commtower", "name": "Comm Tower", "category": "structure", "buildable": false,
+			"desc": "Long range military radio relay.",
+			"cost": 0, "health": 800, "footprint": [1, 1], "sight": 6, "height": 450, "order": 94,
+			"parts": [
+				{ "shape": "cube", "at": [0, 0, 30], "size": [1.5, 1.5, 0.6], "color": "concrete" },
+				{ "shape": "cube", "at": [0, 0, 75], "size": [1.0, 1.0, 0.3], "color": "team" },
+				{ "shape": "cylinder", "at": [0, 0, 260], "size": [0.2, 0.2, 4.4], "color": "metal" },
+				{ "shape": "cube", "at": [0, 0, 380], "size": [1.0, 0.06, 0.06], "color": "metal", "spin": 20 },
+				{ "shape": "sphere", "at": [0, 0, 480], "size": [0.28, 0.28, 0.28], "color": [1.0, 0.1, 0.05], "glow": true }
+			]
+		},
+		{
+			"id": "listeningpost", "name": "Listening Post", "category": "structure", "buildable": false,
+			"desc": "Signals intelligence station. Engineers can capture it.",
+			"cost": 0, "health": 1400, "footprint": [3, 3], "sight": 9, "radar": true, "order": 95,
+			"model": "pad3",
+			"parts": [
+				{ "shape": "cube", "at": [0, 70, 50], "size": [4.4, 2.8, 1.0], "color": "concrete" },
+				{ "shape": "cube", "at": [0, 211, 60], "size": [4.4, 0.08, 0.3], "color": "team" },
+				{ "shape": "cylinder", "at": [-140, -140, 120], "size": [0.3, 0.3, 2.2], "color": "metal" },
+				{ "shape": "sphere", "at": [-140, -140, 250], "size": [2.4, 2.4, 0.6], "rot": [-30, 0, 0], "color": "metal", "spin": 15 },
+				{ "shape": "cylinder", "at": [160, -160, 180], "size": [0.12, 0.12, 3.6], "color": "metal" }
+			]
+		},
+		{
+			"id": "bastion", "name": "Bastion Command HQ", "category": "structure", "buildable": false,
+			"desc": "Fortified command headquarters.",
+			"cost": 0, "health": 3000, "footprint": [3, 3], "sight": 8, "order": 96,
+			"model": "pad3",
+			"parts": [
+				{ "shape": "cube", "at": [0, 0, 110], "size": [4.4, 4.4, 2.2], "color": "concrete" },
+				{ "shape": "cube", "at": [0, 0, 226], "size": [4.6, 4.6, 0.12], "color": "teamdark" },
+				{ "shape": "cylinder", "at": [220, 220, 140], "size": [1.0, 1.0, 2.8], "color": "concrete" },
+				{ "shape": "cylinder", "at": [-220, 220, 140], "size": [1.0, 1.0, 2.8], "color": "concrete" },
+				{ "shape": "cylinder", "at": [220, -220, 140], "size": [1.0, 1.0, 2.8], "color": "concrete" },
+				{ "shape": "cylinder", "at": [-220, -220, 140], "size": [1.0, 1.0, 2.8], "color": "concrete" },
+				{ "shape": "cylinder", "at": [0, 0, 340], "size": [0.06, 0.06, 2.2], "color": "metal" },
+				{ "shape": "cube", "at": [30, 0, 420], "size": [0.6, 0.04, 0.4], "color": "team" }
+			]
+		},
+		{
+			"id": "auroracore", "name": "Aurora Assembly Site", "category": "structure", "buildable": false,
+			"desc": "Where the Aurora Lance's heart is being assembled.",
+			"cost": 0, "health": 4500, "footprint": [3, 3], "sight": 8, "height": 400, "order": 97,
+			"model": "pad3",
+			"parts": [
+				{ "shape": "cylinder", "at": [0, 0, 120], "size": [3.2, 3.2, 2.4], "color": "metal" },
+				{ "shape": "cylinder", "at": [0, 0, 250], "size": [2.2, 2.2, 0.3], "color": "team" },
+				{ "shape": "sphere", "at": [0, 0, 330], "size": [1.4, 1.4, 1.4], "color": [0.5, 0.8, 1.0], "glow": true, "spin": 45 },
+				{ "shape": "cube", "at": [230, 0, 200], "size": [0.12, 4.6, 0.12], "color": [0.85, 0.65, 0.1] },
+				{ "shape": "cube", "at": [-230, 0, 200], "size": [0.12, 4.6, 0.12], "color": [0.85, 0.65, 0.1] },
+				{ "shape": "cylinder", "at": [230, 230, 200], "size": [0.12, 0.12, 4.0], "color": "metal" },
+				{ "shape": "cylinder", "at": [-230, 230, 200], "size": [0.12, 0.12, 4.0], "color": "metal" },
+				{ "shape": "cylinder", "at": [230, -230, 200], "size": [0.12, 0.12, 4.0], "color": "metal" },
+				{ "shape": "cylinder", "at": [-230, -230, 200], "size": [0.12, 0.12, 4.0], "color": "metal" }
+			]
+		},
+		{
+			"id": "aurora", "name": "Aurora Lance", "category": "structure", "buildable": false,
+			"desc": "The Iron Pact's weather-breaking superweapon. It can call down lightning on anything near it.",
+			"cost": 0, "health": 9000, "footprint": [4, 4], "sight": 14, "weapon": "aurora_bolt", "muzzle": [0, 0, 1100], "height": 1150, "order": 98,
+			"model": "pad4",
+			"parts": [
+				{ "shape": "cylinder", "at": [0, 0, 60], "size": [6.6, 6.6, 1.2], "color": "metal" },
+				{ "shape": "cylinder", "at": [0, 0, 200], "size": [4.0, 4.0, 1.8], "color": "team" },
+				{ "shape": "cone", "at": [0, 0, 600], "size": [2.0, 2.0, 6.0], "color": "metal" },
+				{ "shape": "cylinder", "at": [0, 0, 700], "size": [3.2, 3.2, 0.1], "color": "team", "spin": 40 },
+				{ "shape": "cylinder", "at": [0, 0, 850], "size": [2.4, 2.4, 0.08], "color": "team", "spin": -55 },
+				{ "shape": "cylinder", "at": [0, 0, 960], "size": [0.3, 0.3, 2.4], "color": [0.5, 0.8, 1.0], "glow": true },
+				{ "shape": "sphere", "at": [0, 0, 1100], "size": [1.3, 1.3, 1.3], "color": [0.6, 0.9, 1.0], "glow": true, "spin": 30 },
+				{ "shape": "cylinder", "at": [300, 300, 150], "size": [0.6, 0.6, 3.0], "color": "teamdark" },
+				{ "shape": "cylinder", "at": [-300, 300, 150], "size": [0.6, 0.6, 3.0], "color": "teamdark" },
+				{ "shape": "cylinder", "at": [300, -300, 150], "size": [0.6, 0.6, 3.0], "color": "teamdark" },
+				{ "shape": "cylinder", "at": [-300, -300, 150], "size": [0.6, 0.6, 3.0], "color": "teamdark" },
+				{ "shape": "sphere", "at": [300, 300, 310], "size": [0.4, 0.4, 0.4], "color": [0.5, 0.8, 1.0], "glow": true },
+				{ "shape": "sphere", "at": [-300, 300, 310], "size": [0.4, 0.4, 0.4], "color": [0.5, 0.8, 1.0], "glow": true },
+				{ "shape": "sphere", "at": [300, -300, 310], "size": [0.4, 0.4, 0.4], "color": [0.5, 0.8, 1.0], "glow": true },
+				{ "shape": "sphere", "at": [-300, -300, 310], "size": [0.4, 0.4, 0.4], "color": [0.5, 0.8, 1.0], "glow": true }
+			]
+		},
+		{
+			"id": "auroracontrol", "name": "Aurora Control Center", "category": "structure", "buildable": false,
+			"desc": "Command bunker for the Aurora Lance. Whoever holds it holds the trigger.",
+			"cost": 0, "health": 3200, "footprint": [3, 3], "sight": 8, "height": 300, "order": 99,
+			"model": "pad3",
+			"parts": [
+				{ "shape": "cube", "at": [0, 0, 90], "size": [5.0, 5.0, 1.8], "color": "concrete" },
+				{ "shape": "cube", "at": [0, 251, 100], "size": [5.0, 0.04, 0.3], "color": "team" },
+				{ "shape": "sphere", "at": [0, 0, 190], "size": [3.0, 3.0, 1.6], "color": "glass" },
+				{ "shape": "cylinder", "at": [200, -200, 260], "size": [0.1, 0.1, 3.2], "color": "metal" },
+				{ "shape": "sphere", "at": [200, -200, 420], "size": [0.25, 0.25, 0.25], "color": [0.5, 0.8, 1.0], "glow": true }
+			]
+		}
+	]
+}

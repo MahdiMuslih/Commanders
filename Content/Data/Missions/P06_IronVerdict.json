@@ -1,0 +1,169 @@
+{
+	"id": "P06",
+	"title": "Iron Verdict",
+	"subtitle": "Seize the Aurora Control Center",
+	"location": "Mount Belov",
+	"date": "31 December 1958, 21:00",
+	"briefing": [
+		"Commander, what we do tonight will be called treason. Premier Vasko intends to fire the Aurora Lance at Geneva at midnight - and, if Geneva does not kneel, at our own city of Volgrad.",
+		"Marshal Volkova has declared the order unlawful. The units loyal to her are under your command. Colonel Strel's Aurora Guard holds Mount Belov with the Pact's newest weapons and will fight to the last man.",
+		"The Lance can only be stopped from its Control Center beside it. Send an Engineer inside before midnight. Do not destroy the Control Center - we need it intact to shut the Lance down safely. And keep the Marshal alive. Without her, there is no one to give the order to stand down."
+	],
+	"victory_text": "The Aurora Control Center is in loyal hands. The Lance is powering down.",
+	"defeat_text": "Midnight has passed. The Lance has fired.",
+
+	"map": {
+		"width": 72, "height": 72, "theme": "winter", "seed": 1231,
+		"rocks": [ [0, 34, 16, 2], [20, 46, 2, 14], [46, 24, 2, 18], [48, 40, 16, 2], [12, 0, 2, 12], [64, 30, 8, 2] ],
+		"trees": [ [0, 0, 10, 8], [16, 22, 8, 8], [50, 46, 8, 8], [28, 60, 10, 10], [60, 58, 12, 12], [0, 40, 8, 8] ],
+		"water": [ [26, 36, 10, 3] ],
+		"roads": [ [8, 64, 40, 1], [40, 22, 1, 43], [40, 22, 26, 1], [30, 36, 2, 3] ],
+		"random_trees": 0.02, "random_rocks": 0.003,
+		"clear": [ [0, 52, 24, 20], [22, 2, 24, 20], [50, 0, 22, 24] ],
+		"ore": [
+			{ "at": [18, 66], "radius": 3.5, "richness": 9 },
+			{ "at": [6, 54], "radius": 3, "richness": 9 },
+			{ "at": [36, 48], "radius": 3, "richness": 12, "gems": true },
+			{ "at": [20, 10], "radius": 3, "richness": 9 },
+			{ "at": [60, 32], "radius": 3, "richness": 12, "gems": true }
+		]
+	},
+
+	"teams": [
+		{ "name": "Volkova's Loyalists", "faction": "pact", "player": true, "alliance": 0, "credits": 7000, "locked": ["mcv"] },
+		{ "name": "Vasko Guard", "faction": "pact", "ai": true, "alliance": 1, "credits": 10000, "difficulty": "hard", "color": [0.16, 0.17, 0.2],
+		  "ai_config": { "first_attack": 240, "attack_interval": 140, "attack_size": 7 } },
+		{ "name": "Aurora Guard", "faction": "pact", "ai": true, "alliance": 1, "credits": 0, "difficulty": "hard", "color": [0.3, 0.3, 0.34],
+		  "can_build": false, "ai_config": { "build": false, "produce": false, "attack": false, "defend": true } }
+	],
+
+	"entities": [
+		{ "type": "mcv", "team": 0, "at": [11, 62], "yaw": 270 },
+		{ "type": "volkova", "team": 0, "at": [9, 66], "tag": "Volkova" },
+		{ "type": "titan", "team": 0, "at": [15, 58], "yaw": 300 },
+		{ "type": "bear", "team": 0, "at": [6, 58], "yaw": 300 },
+		{ "type": "bear", "team": 0, "at": [10, 57], "yaw": 300 },
+		{ "type": "bear", "team": 0, "at": [18, 61], "yaw": 300 },
+		{ "type": "thunder", "team": 0, "at": [5, 66], "yaw": 300 },
+		{ "type": "thunder", "team": 0, "at": [15, 67], "yaw": 300 },
+		{ "type": "flaktruck", "team": 0, "at": [13, 65], "yaw": 300 },
+		{ "type": "shock", "team": 0, "at": [8, 68] },
+		{ "type": "shock", "team": 0, "at": [10, 68] },
+		{ "type": "engineer", "team": 0, "at": [12, 69] },
+		{ "type": "engineer", "team": 0, "at": [13, 69] },
+		{ "type": "rifle", "team": 0, "at": [7, 64] },
+		{ "type": "rifle", "team": 0, "at": [8, 64] },
+		{ "type": "rifle", "team": 0, "at": [16, 64] },
+		{ "type": "rifle", "team": 0, "at": [17, 64] },
+
+		{ "type": "conyard", "team": 1, "at": [31, 4] },
+		{ "type": "power", "team": 1, "at": [35, 4] },
+		{ "type": "power", "team": 1, "at": [38, 4] },
+		{ "type": "power", "team": 1, "at": [27, 4] },
+		{ "type": "refinery", "team": 1, "at": [24, 9] },
+		{ "type": "barracks", "team": 1, "at": [36, 9] },
+		{ "type": "factory", "team": 1, "at": [31, 10] },
+		{ "type": "radar", "team": 1, "at": [39, 9] },
+		{ "type": "helipad", "team": 1, "at": [42, 6] },
+		{ "type": "techcenter", "team": 1, "at": [42, 12] },
+		{ "type": "harvester", "team": 1, "at": [25, 13] },
+		{ "type": "bunker", "team": 1, "at": [28, 18] },
+		{ "type": "bunker", "team": 1, "at": [36, 18] },
+		{ "type": "arctower", "team": 1, "at": [32, 19] },
+		{ "type": "flakcannon", "team": 1, "at": [34, 15] },
+		{ "type": "bear", "team": 1, "at": [30, 21], "yaw": 90 },
+		{ "type": "bear", "team": 1, "at": [35, 21], "yaw": 90 },
+		{ "type": "rifle", "team": 1, "at": [31, 22] },
+		{ "type": "rifle", "team": 1, "at": [33, 22] },
+
+		{ "type": "aurora", "team": 2, "at": [65, 3], "tag": "Lance" },
+		{ "type": "auroracontrol", "team": 2, "at": [57, 9], "tag": "Control", "invulnerable": true },
+		{ "type": "power", "team": 2, "at": [69, 12] },
+		{ "type": "power", "team": 2, "at": [69, 15] },
+		{ "type": "power", "team": 2, "at": [52, 2] },
+		{ "type": "arctower", "team": 2, "at": [55, 16] },
+		{ "type": "arctower", "team": 2, "at": [62, 16] },
+		{ "type": "arctower", "team": 2, "at": [53, 8] },
+		{ "type": "flakcannon", "team": 2, "at": [60, 5] },
+		{ "type": "flakcannon", "team": 2, "at": [52, 13] },
+		{ "type": "bunker", "team": 2, "at": [58, 18] },
+		{ "type": "titan", "team": 2, "at": [56, 20], "yaw": 180 },
+		{ "type": "titan", "team": 2, "at": [63, 20], "yaw": 180 },
+		{ "type": "shock", "team": 2, "at": [59, 20] },
+		{ "type": "shock", "team": 2, "at": [60, 20] }
+	],
+
+	"camera": [11, 60],
+
+	"objectives": [
+		{ "id": "control", "type": "capture", "tag": "Control", "text": "Capture the Aurora Control Center with an Engineer.", "time_limit": 1500, "timer_label": "Lance fires in", "fail_text": "Midnight. The Aurora Lance has fired on Geneva." },
+		{ "id": "volkova", "type": "protect", "tag": "Volkova", "text": "Marshal Volkova must survive.", "fail_text": "Marshal Volkova has been killed. The loyalist cause dies with her." },
+		{ "id": "lance", "type": "destroy", "tag": "Lance", "primary": false, "text": "Destroy the Aurora Lance itself." }
+	],
+
+	"intro_cinematic": "intro",
+	"outro_cinematic": "outro",
+
+	"on_start": [
+		{ "type": "dialogue", "lines": [
+			{ "speaker": "Col. Gregor Strel", "color": [0.75, 0.75, 0.8], "text": "Marshal Volkova. By order of the Premier you are relieved of command. Surrender, or be destroyed with your mutineers." },
+			{ "speaker": "Marshal Katya Volkova", "color": [1.0, 0.3, 0.25], "text": "Come and take my command, Gregor. Commander - the mountain is yours." }
+		] }
+	],
+
+	"triggers": [
+		{ "id": "vasko", "when": { "type": "time", "seconds": 300 }, "actions": [
+			{ "type": "dialogue", "lines": [
+				{ "speaker": "Premier Dmitri Vasko", "color": [0.85, 0.2, 0.2], "text": "Soldiers of the Pact! Katya Volkova is a traitor. Any man who follows her will be shot, and his family with him." },
+				{ "speaker": "Commissar Lev Orlov", "color": [1.0, 0.5, 0.45], "text": "...I am a political officer, Commander. My duty is to the Party. Tonight, I think the Party is standing right here." }
+			] }
+		] },
+		{ "id": "hale", "when": { "type": "time", "seconds": 600 }, "actions": [
+			{ "type": "dialogue", "lines": [
+				{ "speaker": "Gen. Adrian Hale (open channel)", "color": [0.95, 0.8, 0.45], "text": "Marshal Volkova, this is General Hale of the Concord. Our guns are silent on the Lorne. Whatever you are doing up there tonight... good hunting." },
+				{ "speaker": "Marshal Katya Volkova", "color": [1.0, 0.3, 0.25], "text": "Twelve years of war, and the enemy wishes me luck before my own Premier does." }
+			] }
+		] },
+		{ "id": "ten", "when": { "type": "time", "seconds": 900 }, "actions": [
+			{ "type": "dialogue", "lines": [ { "speaker": "Commissar Lev Orlov", "color": [1.0, 0.5, 0.45], "text": "Ten minutes to midnight. The Lance is singing - you can hear it from here." } ] }
+		] },
+		{ "id": "near", "when": { "type": "area", "team": "player", "area": [48, 0, 24, 24] }, "actions": [
+			{ "type": "dialogue", "lines": [
+				{ "speaker": "Marshal Katya Volkova", "color": [1.0, 0.3, 0.25], "text": "That bunker beside the Lance is the Control Center. Don't fire on it - get an Engineer inside!" }
+			] }
+		] },
+		{ "id": "counter", "when": { "type": "time", "seconds": 660 }, "actions": [
+			{ "type": "spawn", "team": 1, "units": ["titan", "bear", "bear", "shock", "shock", "thunder"], "at": [40, 1], "attack_move": [10, 62] },
+			{ "type": "spawn", "team": 1, "units": ["vulture", "vulture"], "at": [70, 30], "attack_move": [9, 66] },
+			{ "type": "dialogue", "lines": [ { "speaker": "Col. Gregor Strel", "color": [0.75, 0.75, 0.8], "text": "Guard divisions - find the Marshal. Bring me her head." } ] }
+		] },
+		{ "id": "volkova_hurt", "when": { "type": "damaged", "tag": "Volkova", "below": 0.5 }, "actions": [
+			{ "type": "dialogue", "lines": [ { "speaker": "Commissar Lev Orlov", "color": [1.0, 0.5, 0.45], "text": "The Marshal is wounded! Pull her back!" } ] }
+		] }
+	],
+
+	"cinematics": {
+		"intro": {
+			"letterbox": true, "fade_in": 3.0, "fade_out": 1.0,
+			"shots": [
+				{ "duration": 8, "from": [50, 30, 900], "to": [54, 24, 1200], "look": [66, 5, 600], "fov": 50, "title": "CHAPTER SIX", "title_sub": "Iron Verdict" },
+				{ "duration": 9, "from": [9, 70, 260], "to": [9, 69, 300], "look": [9, 66, 80], "fov": 38,
+				  "speaker": "Marshal Katya Volkova", "text": "Soldiers. We swore to defend the Pact. Not one man. Not one machine. The Pact - its fields, its cities, its people." },
+				{ "duration": 9, "orbit": { "center": [11, 62], "radius": 8, "height": 700, "from": 240, "to": 300 }, "fov": 46,
+				  "speaker": "Marshal Katya Volkova", "text": "Tonight the Premier will burn one of our cities to win his war. We will not let him. For Volgrad. For the Pact. Forward!" }
+			]
+		},
+		"outro": {
+			"letterbox": true, "fade_in": 1.0, "fade_out": 3.0,
+			"shots": [
+				{ "duration": 8, "orbit": { "center": [67, 5], "radius": 10, "height": 1100, "from": 200, "to": 250 }, "fov": 50,
+				  "speaker": "Dr. Ilse Varga", "text": "Control is yours. I am shutting the Lance down... there. It is over. It is finally over." },
+				{ "duration": 9, "from": [11, 72, 900], "to": [11, 66, 1400], "look": [30, 40, 0], "fov": 50,
+				  "speaker": "Marshal Katya Volkova", "text": "This is Marshal Volkova to every unit of the Iron Pact. The war is over. Stand down. Go home to your families.", "title": "THE END", "title_sub": "The Long Night is over" }
+			],
+			"events": [
+				{ "t": 3.0, "action": { "type": "sun", "pitch": -30, "yaw": 15 } }
+			]
+		}
+	}
+}

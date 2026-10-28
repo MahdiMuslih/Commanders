@@ -1,0 +1,180 @@
+{
+	"id": "C06",
+	"title": "Aurora",
+	"subtitle": "Destroy the Aurora Lance before the solstice",
+	"location": "Mount Belov",
+	"date": "31 December 1958, 20:00",
+	"briefing": [
+		"This is it, Commander. The Aurora Lance stands on the north-eastern shoulder of Mount Belov. According to Doctor Varga it will reach full charge at midnight - in thirty minutes - and Premier Vasko will fire it at Geneva.",
+		"The Lance is defended by Colonel Strel's Aurora Guard: Arc Towers, flak, and Titan siege tanks. Between you and it sits the Pact's main army group, which will counter-attack hard. The Lance can strike anything that comes close with lightning.",
+		"You have everything the Concord can give you, including Hawk gunships and the full Tech Center arsenal. Varga says the Lance's shield draws on the power plants that ring it - destroy them, and its defences go dark. Then bring it down."
+	],
+	"victory_text": "The Aurora Lance has fallen. The Iron Winter is over.",
+	"defeat_text": "The Aurora Lance has fired. A storm without end is rolling toward Geneva.",
+
+	"map": {
+		"width": 80, "height": 80, "theme": "winter", "seed": 1231,
+		"rocks": [ [0, 40, 18, 2], [26, 30, 2, 18], [40, 46, 20, 2], [58, 24, 2, 16], [64, 40, 16, 2], [44, 0, 2, 10], [16, 58, 2, 10] ],
+		"trees": [ [0, 0, 12, 10], [30, 0, 10, 6], [4, 26, 10, 8], [46, 30, 8, 10], [66, 56, 12, 10], [30, 64, 8, 8], [52, 70, 8, 8] ],
+		"water": [ [22, 50, 12, 4], [70, 30, 6, 6] ],
+		"roads": [ [10, 70, 50, 1], [36, 20, 1, 50], [36, 20, 30, 1] ],
+		"random_trees": 0.02, "random_rocks": 0.003,
+		"clear": [ [0, 60, 26, 20], [26, 4, 30, 22], [58, 0, 22, 22] ],
+		"ore": [
+			{ "at": [22, 66], "radius": 3.5, "richness": 9 },
+			{ "at": [8, 52], "radius": 3, "richness": 9 },
+			{ "at": [44, 58], "radius": 3, "richness": 12, "gems": true },
+			{ "at": [24, 12], "radius": 3, "richness": 9 },
+			{ "at": [66, 34], "radius": 3, "richness": 12, "gems": true }
+		]
+	},
+
+	"teams": [
+		{ "name": "Concord", "faction": "concord", "player": true, "alliance": 0, "credits": 7000 },
+		{ "name": "Pact Belov Army Group", "faction": "pact", "ai": true, "alliance": 1, "credits": 9000, "difficulty": "hard",
+		  "ai_config": { "first_attack": 240, "attack_interval": 140, "attack_size": 7 } },
+		{ "name": "Aurora Guard", "faction": "pact", "ai": true, "alliance": 1, "credits": 0, "difficulty": "hard", "color": [0.18, 0.2, 0.24],
+		  "can_build": false, "ai_config": { "build": false, "produce": false, "attack": false, "defend": true } }
+	],
+
+	"entities": [
+		{ "type": "mcv", "team": 0, "at": [12, 72], "yaw": 270 },
+		{ "type": "warden", "team": 0, "at": [8, 68], "yaw": 270 },
+		{ "type": "warden", "team": 0, "at": [10, 67], "yaw": 270 },
+		{ "type": "warden", "team": 0, "at": [14, 67], "yaw": 270 },
+		{ "type": "longbow", "team": 0, "at": [6, 74], "yaw": 270 },
+		{ "type": "longbow", "team": 0, "at": [18, 74], "yaw": 270 },
+		{ "type": "skytrack", "team": 0, "at": [16, 70], "yaw": 270 },
+		{ "type": "ranger", "team": 0, "at": [9, 76] },
+		{ "type": "ranger", "team": 0, "at": [11, 76] },
+		{ "type": "rocket", "team": 0, "at": [13, 76] },
+		{ "type": "rocket", "team": 0, "at": [15, 76] },
+		{ "type": "rocket", "team": 0, "at": [17, 76] },
+		{ "type": "engineer", "team": 0, "at": [12, 77] },
+		{ "type": "hale", "team": 0, "at": [10, 74], "tag": "Hale" },
+
+		{ "type": "conyard", "team": 1, "at": [36, 8] },
+		{ "type": "power", "team": 1, "at": [40, 8] },
+		{ "type": "power", "team": 1, "at": [40, 11] },
+		{ "type": "power", "team": 1, "at": [30, 6] },
+		{ "type": "refinery", "team": 1, "at": [28, 10] },
+		{ "type": "refinery", "team": 1, "at": [30, 16] },
+		{ "type": "barracks", "team": 1, "at": [44, 12] },
+		{ "type": "factory", "team": 1, "at": [36, 13] },
+		{ "type": "radar", "team": 1, "at": [47, 8] },
+		{ "type": "helipad", "team": 1, "at": [48, 14] },
+		{ "type": "techcenter", "team": 1, "at": [50, 8] },
+		{ "type": "harvester", "team": 1, "at": [29, 14] },
+		{ "type": "harvester", "team": 1, "at": [31, 20] },
+		{ "type": "bunker", "team": 1, "at": [32, 24] },
+		{ "type": "bunker", "team": 1, "at": [40, 24] },
+		{ "type": "arctower", "team": 1, "at": [36, 25] },
+		{ "type": "flakcannon", "team": 1, "at": [44, 18] },
+		{ "type": "bear", "team": 1, "at": [34, 26], "yaw": 90 },
+		{ "type": "bear", "team": 1, "at": [38, 26], "yaw": 90 },
+		{ "type": "thunder", "team": 1, "at": [36, 19], "yaw": 90 },
+		{ "type": "rifle", "team": 1, "at": [33, 27] },
+		{ "type": "rifle", "team": 1, "at": [39, 27] },
+
+		{ "type": "aurora", "team": 2, "at": [68, 5], "tag": "Lance" },
+		{ "type": "power", "team": 2, "at": [62, 3], "tag": "LancePower" },
+		{ "type": "power", "team": 2, "at": [74, 3], "tag": "LancePower" },
+		{ "type": "power", "team": 2, "at": [74, 11], "tag": "LancePower" },
+		{ "type": "power", "team": 2, "at": [62, 11], "tag": "LancePower" },
+		{ "type": "arctower", "team": 2, "at": [65, 14] },
+		{ "type": "arctower", "team": 2, "at": [72, 14] },
+		{ "type": "arctower", "team": 2, "at": [61, 8] },
+		{ "type": "flakcannon", "team": 2, "at": [66, 2] },
+		{ "type": "flakcannon", "team": 2, "at": [70, 15] },
+		{ "type": "bunker", "team": 2, "at": [60, 16] },
+		{ "type": "bunker", "team": 2, "at": [76, 16] },
+		{ "type": "titan", "team": 2, "at": [64, 18], "yaw": 180 },
+		{ "type": "titan", "team": 2, "at": [72, 19], "yaw": 180 },
+		{ "type": "shock", "team": 2, "at": [67, 17] },
+		{ "type": "shock", "team": 2, "at": [69, 17] }
+	],
+
+	"camera": [12, 69],
+
+	"objectives": [
+		{ "id": "lance", "type": "destroy", "tag": "Lance", "text": "Destroy the Aurora Lance.", "time_limit": 1800, "timer_label": "Aurora reaches full charge", "fail_text": "Midnight. The Aurora Lance has fired." },
+		{ "id": "power", "type": "destroy", "tag": "LancePower", "primary": false, "text": "Destroy the power plants feeding the Lance's defences." },
+		{ "id": "hale", "type": "protect", "tag": "Hale", "text": "General Hale must survive.", "fail_text": "General Hale has been killed." }
+	],
+
+	"intro_cinematic": "intro",
+	"outro_cinematic": "outro",
+
+	"on_start": [
+		{ "type": "dialogue", "lines": [
+			{ "speaker": "Gen. Adrian Hale", "color": [0.95, 0.8, 0.45], "text": "I'm coming with you this time, Commander. Keep me out of the line of fire and I'll keep out of your way." },
+			{ "speaker": "Dr. Ilse Varga (radio)", "color": [0.85, 0.85, 1.0], "text": "The four power plants around the Lance feed its Arc Towers. Take them out first if you can." }
+		] }
+	],
+
+	"triggers": [
+		{ "id": "strike1", "when": { "type": "time", "seconds": 420 }, "actions": [
+			{ "type": "dialogue", "lines": [ { "speaker": "Lt. Sarah Okafor", "color": [0.4, 0.75, 1.0], "text": "Power surge on Belov! The Lance is test-firing - get clear of the base!" } ] },
+			{ "type": "explosion", "at": [14, 66], "size": 3.0 },
+			{ "type": "delay", "seconds": 0.6, "actions": [ { "type": "explosion", "at": [18, 70], "size": 2.5 } ] },
+			{ "type": "delay", "seconds": 1.2, "actions": [ { "type": "explosion", "at": [10, 72], "size": 2.8 } ] },
+			{ "type": "sun", "pitch": -20, "yaw": 120 }
+		] },
+		{ "id": "strike2", "when": { "type": "time", "seconds": 1080 }, "actions": [
+			{ "type": "dialogue", "lines": [ { "speaker": "Dr. Ilse Varga (radio)", "color": [0.85, 0.85, 1.0], "text": "That was a calibration shot. The next one will not be. Hurry!" } ] },
+			{ "type": "explosion", "at": [36, 50], "size": 3.0 },
+			{ "type": "delay", "seconds": 0.8, "actions": [ { "type": "explosion", "at": [30, 60], "size": 2.5 } ] }
+		] },
+		{ "id": "five_minutes", "when": { "type": "time", "seconds": 1500 }, "actions": [
+			{ "type": "dialogue", "lines": [ { "speaker": "Gen. Adrian Hale", "color": [0.95, 0.8, 0.45], "text": "Five minutes to midnight, Commander. Everything we have - throw it at that Lance now!" } ] }
+		] },
+		{ "id": "power_down", "when": { "type": "destroyed", "tag": "LancePower" }, "actions": [
+			{ "type": "dialogue", "lines": [ { "speaker": "Dr. Ilse Varga (radio)", "color": [0.85, 0.85, 1.0], "text": "The ring is down! Its Arc Towers are blind. Now - strike the Lance!" } ] }
+		] },
+		{ "id": "approach", "when": { "type": "area", "team": "player", "area": [56, 0, 24, 24] }, "actions": [
+			{ "type": "dialogue", "lines": [ { "speaker": "Col. Gregor Strel", "color": [0.75, 0.75, 0.8], "text": "Concord dogs on the mountain. Aurora Guard - no one leaves Belov alive." } ] }
+		] },
+		{ "id": "counter", "when": { "type": "time", "seconds": 720 }, "actions": [
+			{ "type": "spawn", "team": 1, "units": ["titan", "bear", "bear", "thunder", "thunder", "shock", "shock"], "at": [40, 1], "attack_move": [14, 68] },
+			{ "type": "dialogue", "lines": [ { "speaker": "Lt. Sarah Okafor", "color": [0.4, 0.75, 1.0], "text": "Major counter-attack coming down the pass! Titans!" } ] }
+		] }
+	],
+
+	"cinematics": {
+		"intro": {
+			"letterbox": true, "fade_in": 3.0, "fade_out": 1.0,
+			"shots": [
+				{ "duration": 8, "from": [56, 30, 900], "to": [60, 22, 1200], "look": [70, 7, 600], "fov": 50, "title": "CHAPTER SIX", "title_sub": "Aurora" },
+				{ "duration": 9, "orbit": { "center": [70, 7], "radius": 10, "height": 1300, "from": 120, "to": 200 }, "fov": 50,
+				  "speaker": "Dr. Ilse Varga", "text": "There it is. Eleven years of my life. I told them it would end droughts and famines. I was a fool." },
+				{ "duration": 8, "from": [36, 40, 1500], "to": [36, 30, 1300], "look": [38, 14, 0], "fov": 48,
+				  "speaker": "Gen. Adrian Hale", "text": "Their whole army group stands between us and the mountain. We don't need to beat it. We need to get through it." },
+				{ "duration": 7, "from": [12, 80, 900], "to": [12, 74, 700], "look": [12, 68, 0], "fov": 45,
+				  "speaker": "Gen. Adrian Hale", "text": "Thirty minutes, Commander. Let's end this." }
+			],
+			"events": [
+				{ "t": 3.0, "action": { "type": "explosion", "at": [70, 7], "size": 0.5 } }
+			]
+		},
+		"outro": {
+			"letterbox": true, "fade_in": 0.5, "fade_out": 3.0,
+			"shots": [
+				{ "duration": 6, "orbit": { "center": [70, 7], "radius": 12, "height": 900, "from": 200, "to": 230 }, "fov": 50, "shake": 1.5,
+				  "speaker": "Lt. Sarah Okafor", "text": "The Lance is going critical! All units, fall back!" },
+				{ "duration": 8, "from": [50, 40, 2600], "to": [46, 46, 3200], "look": [70, 7, 0], "fov": 55,
+				  "speaker": "Dr. Ilse Varga", "text": "Look at the sky. The storm... it's breaking up." },
+				{ "duration": 10, "from": [12, 80, 1000], "to": [12, 76, 1600], "look": [40, 40, 0], "fov": 50,
+				  "speaker": "Gen. Adrian Hale", "text": "Midnight, and the snow is turning to rain. Happy New Year, Commander. You've given the world a spring.", "title": "THE END", "title_sub": "Operation Thaw is complete" }
+			],
+			"events": [
+				{ "t": 0.3, "action": { "type": "explosion", "at": [70, 7], "size": 4.0 } },
+				{ "t": 1.1, "action": { "type": "explosion", "at": [68, 5], "size": 3.0 } },
+				{ "t": 1.8, "action": { "type": "explosion", "at": [72, 9], "size": 3.2 } },
+				{ "t": 2.6, "action": { "type": "explosion", "at": [70, 7], "size": 5.0 } },
+				{ "t": 3.5, "action": { "type": "explosion", "at": [66, 8], "size": 2.5 } },
+				{ "t": 4.2, "action": { "type": "explosion", "at": [74, 6], "size": 2.5 } },
+				{ "t": 7.0, "action": { "type": "sun", "pitch": -35, "yaw": 20 } }
+			]
+		}
+	}
+}

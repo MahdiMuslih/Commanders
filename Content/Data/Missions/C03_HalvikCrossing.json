@@ -1,0 +1,167 @@
+{
+	"id": "C03",
+	"title": "Halvik Crossing",
+	"subtitle": "Hold the bridges until the 3rd Armoured arrives",
+	"location": "Halvik, Lorne River",
+	"date": "21 December 1958, 05:30",
+	"briefing": [
+		"The Pact has turned north around the Valmont Valley and is racing for the two bridges at Halvik. If they cross the Lorne, nothing stands between them and the coast.",
+		"Engineers have already built you a base on the southern bank. The 3rd Armoured Division is twelve minutes out. You will hold both bridges until they arrive.",
+		"Intelligence warns that the Pact has started flying Vulture gunships in this sector. Skyguard batteries and flak tracks will be essential. Keep your Construction Yard alive - it is the heart of the defence."
+	],
+	"victory_text": "The 3rd Armoured Division has crossed the Lorne. Halvik Crossing held.",
+
+	"map": {
+		"width": 64, "height": 64, "theme": "winter", "seed": 21,
+		"water": [ [0, 29, 64, 3] ],
+		"roads": [ [18, 0, 3, 64], [44, 14, 3, 32], [0, 58, 64, 1] ],
+		"rocks": [ [0, 24, 8, 2], [26, 22, 12, 2], [54, 24, 10, 2], [8, 36, 6, 2], [28, 36, 10, 2], [52, 38, 4, 3] ],
+		"trees": [ [2, 2, 10, 6], [50, 0, 10, 4], [4, 18, 6, 4], [56, 16, 8, 6], [30, 42, 6, 4], [56, 48, 8, 8] ],
+		"random_trees": 0.02,
+		"clear": [ [0, 42, 30, 22], [22, 0, 26, 20] ],
+		"ore": [
+			{ "at": [32, 52], "radius": 3.5, "richness": 9 },
+			{ "at": [4, 60], "radius": 2.5, "richness": 9 },
+			{ "at": [52, 54], "radius": 2.5, "richness": 12, "gems": true },
+			{ "at": [14, 10], "radius": 3, "richness": 9 },
+			{ "at": [52, 10], "radius": 3, "richness": 9 }
+		]
+	},
+
+	"teams": [
+		{ "name": "Concord", "faction": "concord", "player": true, "alliance": 0, "credits": 3500,
+		  "allowed": ["power", "refinery", "barracks", "factory", "radar", "pillbox", "sentinel", "skyguard", "rifle", "rocket", "engineer", "harvester", "jeep", "lancer", "warden", "longbow", "skytrack"] },
+		{ "name": "Pact Northern Group", "faction": "pact", "ai": true, "alliance": 1, "credits": 6000, "difficulty": "normal",
+		  "allowed": ["power", "refinery", "barracks", "factory", "radar", "helipad", "bunker", "flakcannon", "rifle", "rocket", "flamer", "harvester", "wolf", "bear", "thunder", "vulture"],
+		  "ai_config": { "first_attack": 200, "attack_interval": 110, "attack_size": 5 } }
+	],
+
+	"entities": [
+		{ "type": "conyard", "team": 0, "at": [8, 50], "tag": "HQ" },
+		{ "type": "power", "team": 0, "at": [12, 50] },
+		{ "type": "power", "team": 0, "at": [12, 53] },
+		{ "type": "refinery", "team": 0, "at": [5, 44] },
+		{ "type": "barracks", "team": 0, "at": [14, 45] },
+		{ "type": "factory", "team": 0, "at": [23, 50] },
+		{ "type": "harvester", "team": 0, "at": [6, 48] },
+		{ "type": "pillbox", "team": 0, "at": [16, 35] },
+		{ "type": "pillbox", "team": 0, "at": [22, 35] },
+		{ "type": "sentinel", "team": 0, "at": [42, 35] },
+		{ "type": "pillbox", "team": 0, "at": [48, 35] },
+
+		{ "type": "warden", "team": 0, "at": [19, 38], "yaw": 270 },
+		{ "type": "warden", "team": 0, "at": [45, 38], "yaw": 270 },
+		{ "type": "lancer", "team": 0, "at": [17, 40], "yaw": 270 },
+		{ "type": "lancer", "team": 0, "at": [21, 40], "yaw": 270 },
+		{ "type": "lancer", "team": 0, "at": [43, 40], "yaw": 270 },
+		{ "type": "longbow", "team": 0, "at": [30, 46], "yaw": 270 },
+		{ "type": "rifle", "team": 0, "at": [17, 37] },
+		{ "type": "rifle", "team": 0, "at": [18, 37] },
+		{ "type": "rifle", "team": 0, "at": [21, 37] },
+		{ "type": "rifle", "team": 0, "at": [44, 37] },
+		{ "type": "rifle", "team": 0, "at": [46, 37] },
+		{ "type": "rocket", "team": 0, "at": [20, 39] },
+		{ "type": "rocket", "team": 0, "at": [44, 39] },
+		{ "type": "rocket", "team": 0, "at": [46, 39] },
+
+		{ "type": "conyard", "team": 1, "at": [30, 3] },
+		{ "type": "power", "team": 1, "at": [34, 3] },
+		{ "type": "power", "team": 1, "at": [37, 3] },
+		{ "type": "power", "team": 1, "at": [40, 3] },
+		{ "type": "refinery", "team": 1, "at": [24, 7] },
+		{ "type": "barracks", "team": 1, "at": [34, 8] },
+		{ "type": "factory", "team": 1, "at": [38, 8] },
+		{ "type": "radar", "team": 1, "at": [29, 9] },
+		{ "type": "helipad", "team": 1, "at": [43, 5] },
+		{ "type": "harvester", "team": 1, "at": [25, 11] },
+		{ "type": "bunker", "team": 1, "at": [28, 16] },
+		{ "type": "bunker", "team": 1, "at": [36, 16] },
+		{ "type": "flakcannon", "team": 1, "at": [33, 14] },
+		{ "type": "bear", "team": 1, "at": [32, 18], "yaw": 90 },
+		{ "type": "bear", "team": 1, "at": [40, 18], "yaw": 90 },
+		{ "type": "rifle", "team": 1, "at": [30, 19] },
+		{ "type": "rifle", "team": 1, "at": [31, 19] },
+		{ "type": "rifle", "team": 1, "at": [38, 19] }
+	],
+
+	"camera": [19, 40],
+
+	"objectives": [
+		{ "id": "hold", "type": "survive", "seconds": 720, "text": "Hold Halvik Crossing until the 3rd Armoured Division arrives." },
+		{ "id": "hq", "type": "protect", "tag": "HQ", "text": "Protect the Construction Yard.", "fail_text": "The Construction Yard is gone. The southern bank cannot be held." },
+		{ "id": "base", "type": "destroy_all", "primary": false, "text": "Destroy the Pact Northern Group." }
+	],
+
+	"intro_cinematic": "intro",
+	"outro_cinematic": "outro",
+
+	"on_start": [
+		{ "type": "timer", "name": "relief", "seconds": 720, "label": "3rd Armoured arrives in" },
+		{ "type": "dialogue", "lines": [
+			{ "speaker": "Gen. Adrian Hale", "color": [0.95, 0.8, 0.45], "text": "Twelve minutes, Commander. Two bridges. Don't let a single Pact tank across the Lorne." }
+		] }
+	],
+
+	"triggers": [
+		{ "id": "w1", "when": { "type": "time", "seconds": 50 }, "actions": [
+			{ "type": "spawn", "team": 1, "units": ["rifle", "rifle", "rifle", "rifle", "wolf", "wolf"], "at": [19, 1], "attack_move": [19, 40] }
+		] },
+		{ "id": "w2", "when": { "type": "time", "seconds": 140 }, "actions": [
+			{ "type": "spawn", "team": 1, "units": ["bear", "rifle", "rifle", "rifle", "flamer", "flamer"], "at": [45, 1], "attack_move": [45, 40] },
+			{ "type": "dialogue", "lines": [ { "speaker": "Lt. Sarah Okafor", "color": [0.4, 0.75, 1.0], "text": "Second column hitting the east bridge!" } ] }
+		] },
+		{ "id": "w_air", "when": { "type": "time", "seconds": 230 }, "actions": [
+			{ "type": "spawn", "team": 1, "units": ["vulture", "vulture"], "at": [32, 1], "attack_move": [12, 50] },
+			{ "type": "dialogue", "lines": [ { "speaker": "Lt. Sarah Okafor", "color": [0.4, 0.75, 1.0], "text": "Aircraft! Vulture gunships heading for the base! Build Skyguard batteries - rockets can hit them too." } ] }
+		] },
+		{ "id": "halfway", "when": { "type": "time", "seconds": 360 }, "actions": [
+			{ "type": "dialogue", "lines": [ { "speaker": "Gen. Adrian Hale", "color": [0.95, 0.8, 0.45], "text": "Halfway there. The 3rd Armoured is crossing the Lorne flats now. Keep them busy." } ] }
+		] },
+		{ "id": "w3", "when": { "type": "time", "seconds": 420 }, "actions": [
+			{ "type": "spawn", "team": 1, "units": ["bear", "bear", "thunder", "rifle", "rifle", "rifle", "rocket"], "at": [19, 1], "attack_move": [19, 42] }
+		] },
+		{ "id": "titan", "when": { "type": "time", "seconds": 530 }, "actions": [
+			{ "type": "spawn", "team": 1, "units": ["titan", "bear", "bear", "wolf"], "at": [45, 1], "attack_move": [45, 42], "tag": "Titan" },
+			{ "type": "camera", "at": [45, 20] },
+			{ "type": "dialogue", "lines": [
+				{ "speaker": "Capt. Jonah Reyes", "color": [0.5, 1.0, 0.6], "text": "Commander... you seeing this? That's not a tank. That's a building with treads." },
+				{ "speaker": "Lt. Sarah Okafor", "color": [0.4, 0.75, 1.0], "text": "Titan siege tank. Rockets, artillery, everything you've got - focus fire!" }
+			] }
+		] },
+		{ "id": "w4", "when": { "type": "time", "seconds": 600 }, "actions": [
+			{ "type": "spawn", "team": 1, "units": ["rifle", "rifle", "flamer", "flamer", "wolf", "bear"], "at": [19, 1], "attack_move": [19, 42] },
+			{ "type": "spawn", "team": 1, "units": ["vulture", "vulture"], "at": [50, 1], "attack_move": [23, 50] }
+		] },
+		{ "id": "final", "when": { "type": "time", "seconds": 690 }, "actions": [
+			{ "type": "dialogue", "lines": [ { "speaker": "Gen. Adrian Hale", "color": [0.95, 0.8, 0.45], "text": "Thirty seconds, Commander! I can see the dust of the column from here!" } ] }
+		] },
+		{ "id": "titan_dead", "when": { "type": "destroyed", "tag": "Titan" }, "actions": [
+			{ "type": "dialogue", "lines": [ { "speaker": "Capt. Jonah Reyes", "color": [0.5, 1.0, 0.6], "text": "Titan down! I want a piece of that hull for my mantelpiece." } ] }
+		] }
+	],
+
+	"cinematics": {
+		"intro": {
+			"letterbox": true, "fade_in": 2.0, "fade_out": 1.0,
+			"shots": [
+				{ "duration": 7, "from": [8, 34, 900], "to": [30, 34, 900], "look": [19, 30, 0], "look_to": [45, 30, 0], "fov": 50, "title": "CHAPTER THREE", "title_sub": "Halvik Crossing" },
+				{ "duration": 7, "orbit": { "center": [32, 9], "radius": 12, "height": 1100, "from": 250, "to": 300 }, "fov": 48,
+				  "speaker": "Lt. Sarah Okafor", "text": "Pact Northern Group is massing on the far bank. Heavy armour, rocket trucks... and a helipad." },
+				{ "duration": 8, "from": [14, 62, 1300], "to": [14, 54, 900], "look": [14, 48, 0], "fov": 48,
+				  "speaker": "Gen. Adrian Hale", "text": "The engineers did good work on the south bank, Commander. Now it's your turn. Hold the bridges." }
+			]
+		},
+		"outro": {
+			"letterbox": true, "fade_in": 1.0, "fade_out": 2.5,
+			"shots": [
+				{ "duration": 7, "from": [19, 63, 700], "to": [19, 46, 800], "look": [19, 34, 0], "fov": 48,
+				  "speaker": "Gen. Adrian Hale", "text": "The 3rd Armoured is across. Halvik is ours, Commander. You've bought the Concord a week." },
+				{ "duration": 8, "orbit": { "center": [19, 30], "radius": 8, "height": 600, "from": 300, "to": 360 }, "fov": 45,
+				  "speaker": "Lt. Sarah Okafor", "text": "Sir... something odd. The river was flowing an hour ago. It's frozen solid now. In twenty minutes." }
+			],
+			"events": [
+				{ "t": 0.5, "action": { "type": "spawn", "team": 0, "units": ["warden", "warden", "warden", "warden", "longbow", "longbow"], "at": [19, 62], "move_to": [19, 26], "yaw": 270 } }
+			]
+		}
+	}
+}

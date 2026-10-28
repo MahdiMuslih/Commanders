@@ -1,0 +1,148 @@
+{
+	"id": "P05",
+	"title": "Breaking the Line",
+	"subtitle": "Destroy the Concord headquarters at Fort Bastion",
+	"location": "Fort Bastion, Lorne Valley",
+	"date": "29 December 1958, 06:00",
+	"briefing": [
+		"The Concord has pulled everything it has left into Fort Bastion, the fortress that anchors its line across the Lorne Valley. Break Bastion, and the road to the sea is open.",
+		"The full arsenal of the Pact is yours, Commander - including the Titan siege tank and the Arc Tower. Their fortress is ringed with Sentinel turrets and Skyguard flak. Expect a fierce defence and Hawk gunship strikes.",
+		"Destroy the Bastion Command HQ. Without it, their army in the valley will lose all coordination."
+	],
+	"victory_text": "Fort Bastion has fallen. But the war Marshal Volkova is thinking about now is a different one.",
+
+	"map": {
+		"width": 80, "height": 64, "theme": "temperate", "seed": 1229,
+		"rocks": [ [30, 0, 2, 22], [30, 34, 2, 30], [50, 6, 2, 16], [50, 40, 2, 18], [0, 12, 10, 2], [0, 52, 10, 2] ],
+		"trees": [ [0, 0, 12, 10], [16, 46, 10, 10], [36, 0, 10, 8], [36, 52, 12, 12], [60, 0, 10, 6], [70, 54, 10, 10] ],
+		"water": [ [36, 26, 8, 3], [36, 35, 8, 3] ],
+		"roads": [ [2, 32, 76, 1], [40, 22, 1, 20] ],
+		"random_trees": 0.02, "random_rocks": 0.003,
+		"clear": [ [0, 20, 26, 26], [54, 12, 26, 40] ],
+		"ore": [
+			{ "at": [8, 22], "radius": 3, "richness": 9 },
+			{ "at": [8, 44], "radius": 3, "richness": 9 },
+			{ "at": [40, 14], "radius": 3, "richness": 12, "gems": true },
+			{ "at": [40, 48], "radius": 3, "richness": 12, "gems": true },
+			{ "at": [62, 8], "radius": 3, "richness": 9 },
+			{ "at": [62, 56], "radius": 3, "richness": 9 }
+		]
+	},
+
+	"teams": [
+		{ "name": "Iron Pact", "faction": "pact", "player": true, "alliance": 0, "credits": 8000, "locked": ["mcv"] },
+		{ "name": "Concord Lorne Command", "faction": "concord", "ai": true, "alliance": 1, "credits": 10000, "difficulty": "hard",
+		  "ai_config": { "first_attack": 280, "attack_interval": 150, "attack_size": 7 } }
+	],
+
+	"entities": [
+		{ "type": "mcv", "team": 0, "at": [10, 33], "yaw": 0 },
+		{ "type": "bear", "team": 0, "at": [16, 29], "yaw": 0 },
+		{ "type": "bear", "team": 0, "at": [16, 36], "yaw": 0 },
+		{ "type": "bear", "team": 0, "at": [18, 32], "yaw": 0 },
+		{ "type": "thunder", "team": 0, "at": [6, 29], "yaw": 0 },
+		{ "type": "thunder", "team": 0, "at": [6, 37], "yaw": 0 },
+		{ "type": "flaktruck", "team": 0, "at": [13, 37], "yaw": 0 },
+		{ "type": "rifle", "team": 0, "at": [14, 30] },
+		{ "type": "rifle", "team": 0, "at": [14, 31] },
+		{ "type": "rifle", "team": 0, "at": [14, 34] },
+		{ "type": "rifle", "team": 0, "at": [14, 35] },
+		{ "type": "flamer", "team": 0, "at": [15, 32] },
+		{ "type": "flamer", "team": 0, "at": [15, 33] },
+		{ "type": "rocket", "team": 0, "at": [12, 29] },
+		{ "type": "rocket", "team": 0, "at": [12, 36] },
+		{ "type": "engineer", "team": 0, "at": [8, 36] },
+
+		{ "type": "bastion", "team": 1, "at": [66, 30], "tag": "Bastion" },
+		{ "type": "conyard", "team": 1, "at": [71, 22] },
+		{ "type": "power", "team": 1, "at": [75, 22] },
+		{ "type": "power", "team": 1, "at": [75, 25] },
+		{ "type": "power", "team": 1, "at": [75, 37] },
+		{ "type": "power", "team": 1, "at": [75, 40] },
+		{ "type": "refinery", "team": 1, "at": [62, 14] },
+		{ "type": "refinery", "team": 1, "at": [62, 44] },
+		{ "type": "barracks", "team": 1, "at": [71, 27] },
+		{ "type": "factory", "team": 1, "at": [70, 36] },
+		{ "type": "radar", "team": 1, "at": [67, 25] },
+		{ "type": "helipad", "team": 1, "at": [67, 40] },
+		{ "type": "techcenter", "team": 1, "at": [74, 31] },
+		{ "type": "harvester", "team": 1, "at": [63, 18] },
+		{ "type": "harvester", "team": 1, "at": [63, 48] },
+		{ "type": "sentinel", "team": 1, "at": [58, 26] },
+		{ "type": "sentinel", "team": 1, "at": [58, 30] },
+		{ "type": "sentinel", "team": 1, "at": [58, 34] },
+		{ "type": "sentinel", "team": 1, "at": [58, 38] },
+		{ "type": "pillbox", "team": 1, "at": [60, 24] },
+		{ "type": "pillbox", "team": 1, "at": [60, 40] },
+		{ "type": "skyguard", "team": 1, "at": [64, 28] },
+		{ "type": "skyguard", "team": 1, "at": [64, 36] },
+		{ "type": "warden", "team": 1, "at": [56, 29], "yaw": 180 },
+		{ "type": "warden", "team": 1, "at": [56, 33], "yaw": 180 },
+		{ "type": "warden", "team": 1, "at": [56, 37], "yaw": 180 },
+		{ "type": "longbow", "team": 1, "at": [62, 32], "yaw": 180 },
+		{ "type": "longbow", "team": 1, "at": [62, 34], "yaw": 180 },
+		{ "type": "ranger", "team": 1, "at": [57, 31] },
+		{ "type": "ranger", "team": 1, "at": [57, 35] },
+		{ "type": "rocket", "team": 1, "at": [55, 31] },
+		{ "type": "rocket", "team": 1, "at": [55, 35] }
+	],
+
+	"camera": [12, 32],
+
+	"objectives": [
+		{ "id": "bastion", "type": "destroy", "tag": "Bastion", "text": "Destroy the Bastion Command HQ." },
+		{ "id": "all", "type": "destroy_all", "primary": false, "text": "Annihilate Concord Lorne Command." }
+	],
+
+	"intro_cinematic": "intro",
+	"outro_cinematic": "outro",
+
+	"on_start": [
+		{ "type": "dialogue", "lines": [
+			{ "speaker": "Marshal Katya Volkova", "color": [1.0, 0.3, 0.25], "text": "Deploy behind the ridge, Commander. Their artillery outranges our tanks; your Thunders and Titans will have to open the door." }
+		] }
+	],
+
+	"triggers": [
+		{ "id": "first_contact", "when": { "type": "area", "team": "player", "area": [32, 20, 18, 24] }, "actions": [
+			{ "type": "dialogue", "lines": [ { "speaker": "Commissar Lev Orlov", "color": [1.0, 0.5, 0.45], "text": "We hold the valley floor. Bastion's guns are just beyond the eastern ridge." } ] }
+		] },
+		{ "id": "betrayal", "when": { "type": "time", "seconds": 420 }, "actions": [
+			{ "type": "dialogue", "lines": [
+				{ "speaker": "Premier Dmitri Vasko (secure line)", "color": [0.85, 0.2, 0.2], "text": "When the Lance fires on Geneva, the Concord will capitulate within the day." },
+				{ "speaker": "Col. Gregor Strel (secure line)", "color": [0.75, 0.75, 0.8], "text": "And if they do not, Premier?" },
+				{ "speaker": "Premier Dmitri Vasko (secure line)", "color": [0.85, 0.2, 0.2], "text": "Then we turn it on Volgrad and show the world the Concord's cruelty. A city is a small price for a continent." },
+				{ "speaker": "Marshal Katya Volkova", "color": [1.0, 0.3, 0.25], "text": "Volgrad. My mother lives in Volgrad. Commander... you heard none of that. Not yet. Finish this battle." }
+			] }
+		] },
+		{ "id": "air_raid", "when": { "type": "time", "seconds": 300 }, "actions": [
+			{ "type": "spawn", "team": 1, "units": ["hawk", "hawk", "hawk"], "at": [79, 2], "attack_move": [10, 33] }
+		] },
+		{ "id": "bastion_hit", "when": { "type": "damaged", "tag": "Bastion", "below": 0.5 }, "actions": [
+			{ "type": "dialogue", "lines": [ { "speaker": "Concord Radio (intercept)", "color": [0.5, 0.7, 1.0], "text": "Bastion is breached! All units fall back to the HQ!" } ] },
+			{ "type": "ai_attack", "team": 1, "target": [64, 32] }
+		] }
+	],
+
+	"cinematics": {
+		"intro": {
+			"letterbox": true, "fade_in": 2.0, "fade_out": 1.0,
+			"shots": [
+				{ "duration": 7, "from": [0, 32, 1500], "to": [8, 32, 1000], "look": [20, 32, 0], "fov": 50, "title": "CHAPTER FIVE", "title_sub": "Breaking the Line" },
+				{ "duration": 9, "orbit": { "center": [67, 31], "radius": 12, "height": 1300, "from": 160, "to": 220 }, "fov": 50,
+				  "speaker": "Marshal Katya Volkova", "text": "Fort Bastion. Every Concord gun left in the valley is pointed out of those walls." },
+				{ "duration": 7, "from": [24, 32, 700], "to": [28, 32, 800], "look": [40, 32, 0], "fov": 46,
+				  "speaker": "Marshal Katya Volkova", "text": "Break it, Commander, and this war is all but over." }
+			]
+		},
+		"outro": {
+			"letterbox": true, "fade_in": 1.0, "fade_out": 2.5,
+			"shots": [
+				{ "duration": 8, "orbit": { "center": [67, 31], "radius": 10, "height": 900, "from": 200, "to": 260 }, "fov": 48,
+				  "speaker": "Marshal Katya Volkova", "text": "Bastion has fallen. And tonight, Strel will take the Lance to full power on Mount Belov." },
+				{ "duration": 9, "from": [12, 40, 600], "to": [12, 36, 900], "look": [12, 30, 0], "fov": 45,
+				  "speaker": "Marshal Katya Volkova", "text": "I swore an oath to protect the Pact - its people, not its Premier. Gather your forces, Commander. We are going to Belov. Not as Vasko's army. As ours." }
+			]
+		}
+	}
+}
