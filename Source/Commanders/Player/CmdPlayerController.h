@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
 #include "Core/CmdTypes.h"
+#include "Game/CmdNetTypes.h"
 #include "CmdPlayerController.generated.h"
 
 class ACmdEntity;
@@ -63,6 +64,36 @@ public:
 	void CommandGuard();
 	void CommandDeploy();
 
+	/** Every order goes through here: executed directly with authority, else sent to the server. */
+	void SendCommand(const FCmdCommand& Command);
+
+	/** The team this controller is allowed to command (server: its seat; client/SP: the local team). */
+	int32 GetCommandTeam() const;
+
+	/** Networked match: our side has been eliminated and we are watching the rest. */
+	bool IsSpectating() const;
+
+	// Networking --------------------------------------------------------------------
+	UFUNCTION(Server, Reliable)
+	void ServerCommand(const FCmdCommand& Command);
+
+	UFUNCTION(Client, Reliable)
+	void ClientShowMessage(const FString& Text, FLinearColor Color, FName Sound);
+
+	/** Lobby: faction, side and ready flag for this player. */
+	UFUNCTION(Server, Reliable)
+	void ServerSetLobbyChoice(FName Faction, int32 Alliance, bool bReady);
+
+	UFUNCTION(Server, Reliable)
+	void ServerChat(const FString& Text);
+
+	// Text entry (player name, host address, chat) -----------------------------------
+	void BeginTextEntry(FName Field, const FString& Initial, int32 MaxLength);
+	void EndTextEntry(bool bCommit);
+	bool IsTextEntryActive() const { return !TextField.IsNone(); }
+	FName GetTextField() const { return TextField; }
+	const FString& GetTextBuffer() const { return TextBuffer; }
+
 	bool IsDragging() const { return bDragging && bDragActive; }
 	FVector2D GetDragStart() const { return DragStart; }
 	FVector2D GetMousePos() const { return MousePos; }
@@ -89,6 +120,8 @@ private:
 	void BoxSelect(const FVector2D& A, const FVector2D& B, bool bAdd);
 	void SelectSameTypeOnScreen(ACmdEntity* Like);
 	void IssueMove(const FIntPoint& Cell, bool bAttackMove);
+	FCmdCommand MakeUnitCommand(ECmdCommandType Type) const;
+	void HandleTextEntry();
 	void IssueTargetCommand(ACmdEntity* Target, bool bForce);
 	void CleanSelection();
 	void PlaySelectionSound();
@@ -119,4 +152,8 @@ private:
 	TWeakObjectPtr<ACmdEntity> LastClicked;
 	bool bSessionBuilt = false;
 	bool bMenu = false;
+
+	FName TextField;
+	FString TextBuffer;
+	int32 TextMaxLength = 32;
 };

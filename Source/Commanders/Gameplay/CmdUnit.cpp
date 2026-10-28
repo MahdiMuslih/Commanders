@@ -7,6 +7,7 @@
 #include "Data/CmdDataRegistry.h"
 #include "World/CmdGridSubsystem.h"
 #include "Engine/World.h"
+#include "Net/UnrealNetwork.h"
 
 namespace
 {
@@ -31,10 +32,18 @@ void ACmdUnit::BeginPlay()
 	{
 		Altitude = GetActorLocation().Z;
 	}
-	if (IsHarvester())
+	if (IsHarvester() && HasAuthority())
 	{
 		OrderHarvest();
 	}
+}
+
+void ACmdUnit::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(ACmdUnit, Order);
+	DOREPLIFETIME(ACmdUnit, bNetMoving);
+	DOREPLIFETIME(ACmdUnit, Cargo);
 }
 
 bool ACmdUnit::IsHarvester() const
@@ -188,10 +197,10 @@ bool ACmdUnit::TryDeploy()
 	const int32 Team = TeamId;
 	UWorld* World = GetWorld();
 
-	UCmdAudioSubsystem::PlayAt(this, TEXT("deploy"), GetActorLocation());
 	bDead = true;	// leave quietly, the building takes over
 	if (ACmdGameState* GS = GetCmdGameState())
 	{
+		GS->BroadcastSound(TEXT("deploy"), GetActorLocation());
 		GS->UnregisterEntity(this);
 	}
 	Destroy();
@@ -208,6 +217,16 @@ void ACmdUnit::Tick(float DeltaSeconds)
 	Super::Tick(DeltaSeconds);
 	if (!IsAlive())
 	{
+		return;
+	}
+	if (!HasAuthority())
+	{
+		// Clients only animate; position comes from the server (see ACmdEntity::TickNetSmoothing).
+		if (IsInfantry())
+		{
+			BobPhase += DeltaSeconds * (IsMoving() ? 14.f : 0.f);
+			Body->SetRelativeLocation(FVector(0.f, 0.f, IsMoving() ? FMath::Abs(FMath::Sin(BobPhase)) * 6.f : 0.f));
+		}
 		return;
 	}
 
@@ -242,6 +261,8 @@ void ACmdUnit::Tick(float DeltaSeconds)
 		BobPhase += DeltaSeconds * (IsMoving() ? 14.f : 0.f);
 		Body->SetRelativeLocation(FVector(0.f, 0.f, IsMoving() ? FMath::Abs(FMath::Sin(BobPhase)) * 6.f : 0.f));
 	}
+	bNetMoving = IsMoving();
+	PublishNetTransform();
 }
 
 bool ACmdUnit::CanAutoAcquire() const

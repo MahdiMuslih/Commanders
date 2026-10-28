@@ -1,4 +1,5 @@
 #include "UI/CmdHUD.h"
+#include "Game/CmdPlayerState.h"
 #include "Game/CmdGameState.h"
 #include "Game/CmdGameInstance.h"
 #include "Game/CmdGameMode.h"
@@ -103,6 +104,7 @@ void ACmdHUD::BeginPlay()
 			GI->PendingMenuPage = NAME_None;
 		}
 		SkirmishDraft = GI->Skirmish;
+		JoinAddress = GI->GetLastJoinAddress();
 		if (!GI->CurrentMission.IsNone())
 		{
 			if (const UCmdDataRegistry* Data = UCmdDataRegistry::Get(this))
@@ -325,6 +327,9 @@ void ACmdHUD::DrawHUD()
 	case ECmdFlowState::MainMenu:
 		DrawMainMenu();
 		break;
+	case ECmdFlowState::Lobby:
+		DrawLobby();
+		break;
 	case ECmdFlowState::Briefing:
 		DrawBriefing();
 		break;
@@ -333,6 +338,11 @@ void ACmdHUD::DrawHUD()
 		break;
 	case ECmdFlowState::Playing:
 		DrawGameplay();
+		if (GS->IsNetworked())
+		{
+			DrawSpectatorBanner();
+			DrawChatLine();
+		}
 		if (bPauseMenu)
 		{
 			DrawPauseMenu();
@@ -343,6 +353,12 @@ void ACmdHUD::DrawHUD()
 		DrawResult();
 		break;
 	default:
+		if (GS->IsNetworked() && !GS->HasAuthority())
+		{
+			// Client: connected, waiting for the host's world to arrive.
+			DrawRect(FLinearColor(0.f, 0.f, 0.f, 0.85f), 0.f, 0.f, Canvas->ClipX, Canvas->ClipY);
+			Text(TEXT("PREPARING THE BATTLEFIELD..."), Canvas->ClipX * 0.5f, Canvas->ClipY * 0.5f, ColAccent, 1.3f, LargeFont(), true);
+		}
 		break;
 	}
 
@@ -407,18 +423,19 @@ bool ACmdHUD::HandleClick(const FVector2D& Pos, bool bRight)
 				const FVector World(Cell.X * CmdConst::CellSize, Cell.Y * CmdConst::CellSize, 0.f);
 				if (bRight)
 				{
-					TArray<ACmdEntity*> Sel = PC->GetSelection();
-					TSet<FIntPoint> Used;
-					const UCmdGridSubsystem* Grid = GetWorld()->GetSubsystem<UCmdGridSubsystem>();
-					for (ACmdEntity* E : Sel)
+					FCmdCommand Command;
+					Command.Type = ECmdCommandType::Move;
+					Command.Cell = Cmd::WorldToCell(World);
+					for (ACmdEntity* E : PC->GetSelection())
 					{
-						ACmdUnit* U = Cast<ACmdUnit>(E);
-						if (U && U->TeamId == GS->LocalTeamId && Grid)
+						if (E->TeamId == GS->LocalTeamId && !E->IsBuilding())
 						{
-							const FIntPoint C = Grid->FindNearestPassable(Cmd::WorldToCell(World), 12, &Used);
-							Used.Add(C);
-							U->OrderMove(C, false);
+							Command.Units.Add(E);
 						}
+					}
+					if (Command.Units.Num() > 0)
+					{
+						PC->SendCommand(Command);
 					}
 				}
 				else
@@ -459,6 +476,14 @@ void ACmdHUD::HandleEscape()
 void ACmdHUD::HandleConfirm()
 {
 	const ACmdGameState* GS = GetGS();
+	if (GS && GS->Flow == ECmdFlowState::Lobby)
+	{
+		if (ACmdPlayerController* PC = GetPC())
+		{
+			PC->BeginTextEntry(TEXT("chat"), FString(), 120);
+		}
+		return;
+	}
 	if (GS && GS->Flow == ECmdFlowState::Briefing)
 	{
 		if (ACmdMissionDirector* Dir = GetDirector())
@@ -476,7 +501,10 @@ void ACmdHUD::OpenPauseMenu()
 {
 	bPauseMenu = true;
 	bConfirmAbandon = false;
-	if (APlayerController* PC = GetPC())
+	// A networked battle keeps running for everyone else.
+	const ACmdGameState* GS = GetGS();
+	APlayerController* PC = GetPC();
+	if (PC && !(GS && GS->IsNetworked()))
 	{
 		PC->SetPause(true);
 	}
@@ -590,7 +618,92 @@ void ACmdHUD::Execute(const FButton& B, bool bRight)
 	else if (A == TEXT("to_menu") && GI)
 	{
 		if (PC) PC->SetPause(false);
-		GI->ReturnToMenu(GI->Mode == ECmdSessionMode::Campaign ? FName(TEXT("missions")) : FName(TEXT("main")));
+		if (GS && GS->IsNetworked())
+		{
+			GI->LeaveGame();
+		}
+		else
+		{
+			GI->ReturnToMenu(GI->Mode == ECmdSessionMode::Campaign ? FName(TEXT("missions")) : FName(TEXT("main")));
+		}
+	}
+	// --- Multiplayer ------------------------------------------------------
+	else if (A == TEXT("mp_name") && PC && GI)
+	{
+		PC->BeginTextEntry(TEXT("name"), GI->GetPlayerName(), 20);
+	}
+	else if (A == TEXT("mp_addr") && PC)
+	{
+		PC->BeginTextEntry(TEXT("address"), JoinAddress, 64);
+	}
+	else if (A == TEXT("mp_host") && GI)
+	{
+		SkirmishDraft.NumEnemies = FMath::Clamp(SkirmishDraft.NumEnemies, 0, 3);
+		GI->Skirmish = SkirmishDraft;
+		GI->HostGame();
+	}
+	else if (A == TEXT("mp_join") && GI)
+	{
+		GI->JoinGame(JoinAddress);
+	}
+	else if (A == TEXT("lb_faction") || A == TEXT("lb_team") || A == TEXT("lb_ready"))
+	{
+		const ACmdPlayerState* Me = PC ? PC->GetPlayerState<ACmdPlayerState>() : nullptr;
+		if (Me)
+		{
+			FName Faction = Me->Faction;
+			int32 Side = Me->Alliance;
+			bool bReady = Me->bReady || Me->bIsHost;
+			if (A == TEXT("lb_faction")) Faction = Faction == TEXT("concord") ? FName(TEXT("pact")) : FName(TEXT("concord"));
+			if (A == TEXT("lb_team")) Side = (Side + B.Int + CmdConst::MaxPlayers) % CmdConst::MaxPlayers;
+			if (A == TEXT("lb_ready")) bReady = !Me->bReady;
+			SendLobbyChoice(Faction, Side, bReady);
+		}
+	}
+	else if (A.ToString().StartsWith(TEXT("lbs_")) && GS && GS->HasAuthority())
+	{
+		// Host-only match options; they replicate to everyone's lobby screen.
+		FCmdSkirmishSettings& L = GS->LobbySettings;
+		if (A == TEXT("lbs_enemies")) L.NumEnemies = (L.NumEnemies + B.Int + CmdConst::MaxPlayers) % CmdConst::MaxPlayers;
+		else if (A == TEXT("lbs_diff")) L.Difficulty = (L.Difficulty + B.Int + 3) % 3;
+		else if (A == TEXT("lbs_aiteam")) L.bAlliedAI = !L.bAlliedAI;
+		else if (A == TEXT("lbs_theme")) L.Theme = (L.Theme + B.Int + 4) % 4;
+		else if (A == TEXT("lbs_size"))
+		{
+			static const int32 Sizes[3] = { 64, 80, 100 };
+			int32 Index = L.MapSize <= 64 ? 0 : (L.MapSize <= 80 ? 1 : 2);
+			L.MapSize = Sizes[(Index + B.Int + 3) % 3];
+		}
+		else if (A == TEXT("lbs_credits"))
+		{
+			static const int32 Credits[4] = { 2500, 5000, 10000, 20000 };
+			int32 Index = 0;
+			for (int32 i = 0; i < 4; ++i) { if (L.StartingCredits == Credits[i]) Index = i; }
+			L.StartingCredits = Credits[(Index + B.Int + 4) % 4];
+		}
+		UCmdAudioSubsystem::Play2D(this, TEXT("click"));
+	}
+	else if (A == TEXT("lb_start"))
+	{
+		if (ACmdGameMode* GM = GetWorld()->GetAuthGameMode<ACmdGameMode>())
+		{
+			const FString Error = GM->StartMatchFromLobby();
+			if (!Error.IsEmpty())
+			{
+				ShowLobbyError(Error);
+			}
+		}
+	}
+	else if (A == TEXT("lb_chat") && PC)
+	{
+		PC->BeginTextEntry(TEXT("chat"), FString(), 120);
+	}
+	else if (A == TEXT("mp_lobby"))
+	{
+		if (ACmdGameMode* GM = GetWorld()->GetAuthGameMode<ACmdGameMode>())
+		{
+			GM->ReturnToLobby();
+		}
 	}
 	else if (A == TEXT("resume"))
 	{
@@ -628,36 +741,31 @@ void ACmdHUD::Execute(const FButton& B, bool bRight)
 			return;
 		}
 		const FCmdProductionQueue& Q = T->Queues[static_cast<int32>(Def->Category)];
+		FCmdCommand Command;
+		Command.Id = Def->Id;
 		if (bRight)
 		{
-			GS->CancelProduction(Team, Def->Id);
+			Command.Type = ECmdCommandType::Cancel;
+			PC->SendCommand(Command);
 			return;
 		}
 		if (Q.Items.Num() > 0 && Q.Items[0] == Def->Id && Q.bOnHold)
 		{
-			GS->ToggleHold(Team, Def->Category);
+			Command.Type = ECmdCommandType::Hold;
+			Command.Param = static_cast<int32>(Def->Category);
+			PC->SendCommand(Command);
 			return;
 		}
-		if (Def->bIsBuilding)
+		if (Def->bIsBuilding && GS->GetReadyStructure(Team) == Def->Id)
 		{
-			if (GS->GetReadyStructure(Team) == Def->Id)
-			{
-				PC->BeginPlacement(Def->Id);
-				UCmdAudioSubsystem::Play2D(this, TEXT("click"));
-			}
-			else
-			{
-				GS->QueueProduction(Team, Def->Id);
-			}
+			PC->BeginPlacement(Def->Id);
+			UCmdAudioSubsystem::Play2D(this, TEXT("click"));
+			return;
 		}
-		else
-		{
-			const bool bShift = PC->IsInputKeyDown(EKeys::LeftShift) || PC->IsInputKeyDown(EKeys::RightShift);
-			for (int32 i = 0; i < (bShift ? 5 : 1); ++i)
-			{
-				GS->QueueProduction(Team, Def->Id, i == 0);
-			}
-		}
+		const bool bShift = !Def->bIsBuilding && (PC->IsInputKeyDown(EKeys::LeftShift) || PC->IsInputKeyDown(EKeys::RightShift));
+		Command.Type = ECmdCommandType::Queue;
+		Command.Param = bShift ? 5 : 1;
+		PC->SendCommand(Command);
 	}
 	else if (A == TEXT("sell") && PC)
 	{
@@ -716,6 +824,7 @@ void ACmdHUD::DrawMainMenu()
 	if (MenuPage == TEXT("skirmish")) { DrawSkirmishSetup(); return; }
 	if (MenuPage == TEXT("howto")) { DrawHowToPlay(); return; }
 	if (MenuPage == TEXT("credits")) { DrawCredits(); return; }
+	if (MenuPage == TEXT("multiplayer")) { DrawMultiplayerMenu(); return; }
 
 	const float H = Canvas->ClipY;
 	const float PanelW = 600.f * S();
@@ -736,6 +845,7 @@ void ACmdHUD::DrawMainMenu()
 	const float Gap = 16.f * S();
 	Button(TEXT("CAMPAIGN"), X, Y, BW, BH, TEXT("page"), TEXT("campaign"), 0, true, false, 1.2f); Y += BH + Gap;
 	Button(TEXT("SKIRMISH"), X, Y, BW, BH, TEXT("page"), TEXT("skirmish"), 0, true, false, 1.2f); Y += BH + Gap;
+	Button(TEXT("MULTIPLAYER"), X, Y, BW, BH, TEXT("page"), TEXT("multiplayer"), 0, true, false, 1.2f); Y += BH + Gap;
 	Button(TEXT("HOW TO PLAY"), X, Y, BW, BH, TEXT("page"), TEXT("howto"), 0, true, false, 1.2f); Y += BH + Gap;
 	Button(TEXT("CREDITS"), X, Y, BW, BH, TEXT("page"), TEXT("credits"), 0, true, false, 1.2f); Y += BH + Gap;
 	Button(TEXT("QUIT"), X, Y, BW, BH, TEXT("quit"), NAME_None, 0, true, false, 1.2f);
@@ -1111,22 +1221,25 @@ void ACmdHUD::DrawCinematic()
 void ACmdHUD::DrawResult()
 {
 	const ACmdGameState* GS = GetGS();
-	const ACmdMissionDirector* Dir = GetDirector();
+	const ACmdMissionDirector* Dir = GetDirector();	// server only
 	UCmdGameInstance* GI = GetGI();
-	if (!GS || !Dir || !GI)
+	if (!GS || !GI || (!Dir && !GS->IsNetworked()))
 	{
 		return;
 	}
 	const float W = Canvas->ClipX;
 	const float H = Canvas->ClipY;
-	const bool bWin = GS->Flow == ECmdFlowState::Victory;
+	const bool bNet = GS->IsNetworked();
+	const bool bWin = GS->GetDisplayFlow() == ECmdFlowState::Victory;
 	DrawRect(FLinearColor(0.f, 0.f, 0.f, 0.78f), 0.f, 0.f, W, H);
 
-	const FString Heading = Dir->IsSkirmish() ? (bWin ? TEXT("VICTORY") : TEXT("DEFEAT")) : (bWin ? TEXT("MISSION ACCOMPLISHED") : TEXT("MISSION FAILED"));
+	const bool bSkirmishLike = bNet || Dir->IsSkirmish();
+	const FString Heading = bSkirmishLike ? (bWin ? TEXT("VICTORY") : TEXT("DEFEAT")) : (bWin ? TEXT("MISSION ACCOMPLISHED") : TEXT("MISSION FAILED"));
 	float Y = 120.f * S();
 	Text(Heading, W * 0.5f, Y, bWin ? ColAccent : ColBad, 2.6f, LargeFont(), true);
 	Y += 110.f * S();
-	Y = FMath::Max(Y, Paragraph(Dir->ResultReason, W * 0.5f - 500.f * S(), Y, 1000.f * S(), ColText, 1.f, MediumFont()));
+	const FString Reason = bNet ? GS->MatchResultText : Dir->ResultReason;
+	Y = FMath::Max(Y, Paragraph(Reason, W * 0.5f - 500.f * S(), Y, 1000.f * S(), ColText, 1.f, MediumFont()));
 	Y += 30.f * S();
 
 	// Stats table.
@@ -1175,7 +1288,19 @@ void ACmdHUD::DrawResult()
 	const float BY = H - 120.f * S();
 	const float BW = 300.f * S();
 	const float BH = 60.f * S();
-	if (bWin && GI->Mode == ECmdSessionMode::Campaign && !Next.IsNone())
+	if (bNet)
+	{
+		if (GS->HasAuthority())
+		{
+			Button(TEXT("RETURN TO LOBBY"), W * 0.5f + 170.f * S(), BY, BW, BH, TEXT("mp_lobby"), NAME_None, 0, true, true, 1.05f);
+		}
+		else
+		{
+			Text(TEXT("Waiting for the host..."), W * 0.5f + 170.f * S() + BW * 0.5f, BY + 16.f * S(), ColDim, 0.9f, MediumFont(), true);
+		}
+		Button(TEXT("LEAVE"), W * 0.5f - 170.f * S() - BW, BY, BW, BH, TEXT("to_menu"), NAME_None, 0, true, false, 1.15f);
+	}
+	else if (bWin && GI->Mode == ECmdSessionMode::Campaign && !Next.IsNone())
 	{
 		Button(TEXT("NEXT MISSION"), W * 0.5f + 170.f * S(), BY, BW, BH, TEXT("next_mission"), Next, 0, true, true, 1.15f);
 		Button(TEXT("MAIN MENU"), W * 0.5f - 170.f * S() - BW, BY, BW, BH, TEXT("to_menu"));
@@ -1226,7 +1351,9 @@ void ACmdHUD::DrawPauseMenu()
 	const float PX = (W - PW) * 0.5f;
 	const float PY = (H - PH) * 0.5f;
 	Panel(PX, PY, PW, PH, ColPanel, ColBorder, 2.f * S());
-	Text(TEXT("PAUSED"), W * 0.5f, PY + 30.f * S(), ColAccent, 1.6f, LargeFont(), true);
+	const ACmdGameState* PauseGS = GetGS();
+	const bool bNet = PauseGS && PauseGS->IsNetworked();
+	Text(bNet ? TEXT("MENU") : TEXT("PAUSED"), W * 0.5f, PY + 30.f * S(), ColAccent, 1.6f, LargeFont(), true);
 
 	float Y = PY + 120.f * S();
 	const float BX = PX + 50.f * S();
@@ -1234,7 +1361,7 @@ void ACmdHUD::DrawPauseMenu()
 	const float BH = 56.f * S();
 	if (bConfirmAbandon)
 	{
-		Text(TEXT("Abandon this mission?"), W * 0.5f, Y, ColText, 1.f, MediumFont(), true);
+		Text(bNet ? TEXT("Leave this match?") : TEXT("Abandon this mission?"), W * 0.5f, Y, ColText, 1.f, MediumFont(), true);
 		Y += 60.f * S();
 		Button(TEXT("YES, ABANDON"), BX, Y, BW, BH, TEXT("to_menu"));
 		Y += BH + 16.f * S();
@@ -1242,9 +1369,12 @@ void ACmdHUD::DrawPauseMenu()
 		return;
 	}
 	Button(TEXT("RESUME"), BX, Y, BW, BH, TEXT("resume"), NAME_None, 0, true, true); Y += BH + 16.f * S();
-	Button(TEXT("RESTART"), BX, Y, BW, BH, TEXT("restart")); Y += BH + 16.f * S();
+	if (!bNet)
+	{
+		Button(TEXT("RESTART"), BX, Y, BW, BH, TEXT("restart")); Y += BH + 16.f * S();
+	}
 	Button(bShowHelp ? TEXT("HIDE CONTROLS") : TEXT("SHOW CONTROLS"), BX, Y, BW, BH, TEXT("help")); Y += BH + 16.f * S();
-	Button(TEXT("ABANDON MISSION"), BX, Y, BW, BH, TEXT("abandon")); Y += BH + 22.f * S();
+	Button(bNet ? TEXT("LEAVE MATCH") : TEXT("ABANDON MISSION"), BX, Y, BW, BH, TEXT("abandon")); Y += BH + 22.f * S();
 	DrawAudioSettings(BX, Y, BW);
 }
 
@@ -2055,4 +2185,280 @@ void ACmdHUD::DrawHelpOverlay()
 		Text(L, X + 14.f * S(), LY, ColText, 0.68f, SmallFont());
 		LY += 24.f * S();
 	}
+}
+
+// ===========================================================================
+// Multiplayer
+// ===========================================================================
+
+void ACmdHUD::OnTextCommitted(FName Field, const FString& Value)
+{
+	UCmdGameInstance* GI = GetGI();
+	if (Field == TEXT("name") && GI)
+	{
+		GI->SetPlayerName(Value);
+	}
+	else if (Field == TEXT("address"))
+	{
+		JoinAddress = Value.TrimStartAndEnd();
+	}
+}
+
+void ACmdHUD::TextField(FName Field, const FString& Value, float X, float Y, float W, float H, const FString& Placeholder)
+{
+	const ACmdPlayerController* PC = GetPC();
+	const bool bEditing = PC && PC->GetTextField() == Field;
+	const FString Shown = bEditing ? PC->GetTextBuffer() : Value;
+	Panel(X, Y, W, H, FLinearColor(0.f, 0.f, 0.f, 0.7f), bEditing ? ColAccent : (IsMouseIn(X, Y, W, H) ? ColText : ColBorder), 1.5f * S());
+	const bool bCaret = bEditing && FMath::Fmod(Time, 1.f) < 0.55f;
+	if (Shown.IsEmpty() && !bEditing)
+	{
+		Text(Placeholder, X + 16.f * S(), Y + H * 0.5f - 14.f * S(), ColDim, 1.f, MediumFont());
+	}
+	else
+	{
+		Text(Shown + (bCaret ? TEXT("_") : TEXT("")), X + 16.f * S(), Y + H * 0.5f - 14.f * S(), ColText, 1.f, MediumFont());
+	}
+	AddHitArea(X, Y, W, H, Field == TEXT("name") ? FName(TEXT("mp_name")) : FName(TEXT("mp_addr")));
+}
+
+void ACmdHUD::DrawMultiplayerMenu()
+{
+	DrawMenuBackdrop(TEXT("MULTIPLAYER"));
+	UCmdGameInstance* GI = GetGI();
+	if (!GI)
+	{
+		return;
+	}
+	const float PW = 900.f * S();
+	const float PX = (Canvas->ClipX - PW) * 0.5f;
+	float Y = 190.f * S();
+	Panel(PX, Y, PW, 640.f * S(), ColPanel, ColBorder, 2.f * S());
+	Y += 36.f * S();
+
+	const float LX = PX + 60.f * S();
+	const float FW = PW - 120.f * S();
+	const float FH = 56.f * S();
+
+	Text(TEXT("COMMANDER NAME"), LX, Y, ColAccent, 0.9f, SmallFont());
+	Y += 32.f * S();
+	TextField(TEXT("name"), GI->GetPlayerName(), LX, Y, FW, FH, TEXT("Click to enter your name"));
+	Y += FH + 40.f * S();
+
+	Text(TEXT("HOST A GAME"), LX, Y, ColAccent, 0.9f, SmallFont());
+	Y += 30.f * S();
+	Paragraph(TEXT("Open a lobby on this machine. Friends on your network join with your IP address (port 7777 must be reachable for internet play)."), LX, Y, FW - 340.f * S(), ColDim, 0.85f, SmallFont());
+	Button(TEXT("HOST"), LX + FW - 300.f * S(), Y - 4.f * S(), 300.f * S(), FH, TEXT("mp_host"), NAME_None, 0, true, true, 1.15f);
+	Y += FH + 50.f * S();
+
+	Text(TEXT("JOIN A GAME"), LX, Y, ColAccent, 0.9f, SmallFont());
+	Y += 32.f * S();
+	TextField(TEXT("address"), JoinAddress, LX, Y, FW - 330.f * S(), FH, TEXT("Host address, e.g. 192.168.1.20"));
+	Button(TEXT("JOIN"), LX + FW - 300.f * S(), Y, 300.f * S(), FH, TEXT("mp_join"), NAME_None, 0, !JoinAddress.IsEmpty(), false, 1.15f);
+	Y += FH + 40.f * S();
+
+	if (!GI->NetworkError.IsEmpty())
+	{
+		Paragraph(GI->NetworkError, LX, Y, FW, ColBad, 0.95f, MediumFont());
+	}
+	Text(TEXT("Up to 4 players plus AI. The campaign is single player."), LX, 190.f * S() + 640.f * S() - 50.f * S(), ColDim, 0.8f, SmallFont());
+
+	Button(TEXT("BACK"), 60.f * S(), Canvas->ClipY - 100.f * S(), 220.f * S(), 52.f * S(), TEXT("page"), TEXT("main"));
+}
+
+void ACmdHUD::SendLobbyChoice(FName Faction, int32 Alliance, bool bReady)
+{
+	if (ACmdPlayerController* PC = GetPC())
+	{
+		PC->ServerSetLobbyChoice(Faction, Alliance, bReady);
+		UCmdAudioSubsystem::Play2D(this, TEXT("click"));
+	}
+}
+
+void ACmdHUD::ShowLobbyError(const FString& Error)
+{
+	LobbyError = Error;
+	LobbyErrorTime = Time;
+	UCmdAudioSubsystem::Play2D(this, TEXT("deny"));
+}
+
+void ACmdHUD::DrawLobby()
+{
+	const ACmdGameState* GS = GetGS();
+	const ACmdPlayerController* PC = GetPC();
+	const UCmdDataRegistry* Data = UCmdDataRegistry::Get(this);
+	if (!GS || !PC)
+	{
+		return;
+	}
+	const float W = Canvas->ClipX;
+	const float H = Canvas->ClipY;
+	DrawRect(FLinearColor(0.f, 0.f, 0.f, 0.55f), 0.f, 0.f, W, H);
+	DrawMenuBackdrop(TEXT("LOBBY"));
+	const bool bHost = GS->HasAuthority();
+	const ACmdPlayerState* Me = PC->GetPlayerState<ACmdPlayerState>();
+
+	// Players -----------------------------------------------------------------
+	const float PX = 80.f * S();
+	const float PW = W * 0.55f - PX;
+	float Y = 170.f * S();
+	Panel(PX, Y, PW, 470.f * S(), ColPanel, ColBorder, 2.f * S());
+	Text(TEXT("PLAYERS"), PX + 30.f * S(), Y + 20.f * S(), ColAccent, 1.f, MediumFont());
+	Text(TEXT("FACTION"), PX + PW * 0.45f, Y + 24.f * S(), ColDim, 0.8f, SmallFont());
+	Text(TEXT("TEAM"), PX + PW * 0.70f, Y + 24.f * S(), ColDim, 0.8f, SmallFont());
+	Text(TEXT("STATUS"), PX + PW * 0.85f, Y + 24.f * S(), ColDim, 0.8f, SmallFont());
+	Y += 70.f * S();
+
+	const float RowH = 64.f * S();
+	static const FLinearColor TeamColors[CmdConst::MaxPlayers] = {
+		FLinearColor(0.25f, 0.5f, 1.f), FLinearColor(1.f, 0.3f, 0.25f), FLinearColor(1.f, 0.85f, 0.2f), FLinearColor(0.3f, 0.9f, 0.35f) };
+	int32 Shown = 0;
+	for (APlayerState* P : GS->PlayerArray)
+	{
+		const ACmdPlayerState* PS = Cast<ACmdPlayerState>(P);
+		if (!PS)
+		{
+			continue;
+		}
+		const bool bMine = PS == Me;
+		const float RY = Y + Shown * (RowH + 8.f * S());
+		Panel(PX + 20.f * S(), RY, PW - 40.f * S(), RowH, bMine ? FLinearColor(0.1f, 0.12f, 0.08f, 0.9f) : FLinearColor(0.f, 0.f, 0.f, 0.5f), bMine ? ColAccent : ColBorder, 1.f);
+		const FString Name = PS->GetPlayerName() + (PS->bIsHost ? TEXT("  (host)") : TEXT(""));
+		Text(Name, PX + 40.f * S(), RY + 18.f * S(), ColText, 1.f, MediumFont());
+
+		const FCmdFactionDef* Faction = Data ? Data->GetFaction(PS->Faction) : nullptr;
+		const FString FactionName = Faction ? Faction->Name : PS->Faction.ToString();
+		const float FX = PX + PW * 0.45f;
+		if (bMine)
+		{
+			Button(FactionName, FX, RY + 8.f * S(), PW * 0.22f, RowH - 16.f * S(), TEXT("lb_faction"), NAME_None, 0, true, false, 0.85f);
+		}
+		else
+		{
+			Text(FactionName, FX, RY + 20.f * S(), ColText, 0.9f, SmallFont());
+		}
+
+		const int32 Side = FMath::Clamp(PS->Alliance, 0, CmdConst::MaxPlayers - 1);
+		const float TX = PX + PW * 0.70f;
+		DrawRect(TeamColors[Side], TX, RY + 16.f * S(), 10.f * S(), RowH - 32.f * S());
+		if (bMine)
+		{
+			Button(FString::Printf(TEXT("%d"), Side + 1), TX + 18.f * S(), RY + 8.f * S(), 60.f * S(), RowH - 16.f * S(), TEXT("lb_team"), NAME_None, 1);
+		}
+		else
+		{
+			Text(FString::Printf(TEXT("%d"), Side + 1), TX + 30.f * S(), RY + 18.f * S(), ColText, 1.f, MediumFont());
+		}
+
+		const float SX = PX + PW * 0.85f;
+		if (PS->bIsHost)
+		{
+			Text(TEXT("HOST"), SX, RY + 20.f * S(), ColAccent, 0.9f, SmallFont());
+		}
+		else if (bMine)
+		{
+			Button(PS->bReady ? TEXT("READY") : TEXT("NOT READY"), SX, RY + 8.f * S(), PW * 0.13f, RowH - 16.f * S(), TEXT("lb_ready"), NAME_None, 0, true, PS->bReady, 0.8f);
+		}
+		else
+		{
+			Text(PS->bReady ? TEXT("READY") : TEXT("waiting"), SX, RY + 20.f * S(), PS->bReady ? ColAccent : ColDim, 0.9f, SmallFont());
+		}
+		++Shown;
+	}
+	for (int32 i = Shown; i < CmdConst::MaxPlayers; ++i)
+	{
+		const float RY = Y + i * (RowH + 8.f * S());
+		Panel(PX + 20.f * S(), RY, PW - 40.f * S(), RowH, FLinearColor(0.f, 0.f, 0.f, 0.25f), FLinearColor(0.3f, 0.3f, 0.3f, 0.4f), 1.f);
+		const bool bAISeat = i - Shown < GS->LobbySettings.NumEnemies;
+		Text(bAISeat ? TEXT("AI commander") : TEXT("Open"), PX + 40.f * S(), RY + 20.f * S(), ColDim, 0.9f, SmallFont());
+	}
+
+	// Match settings (host edits, everyone sees) -------------------------------
+	const float SX = W * 0.58f;
+	const float SW = W - SX - 80.f * S();
+	float SY = 170.f * S();
+	Panel(SX, SY, SW, 470.f * S(), ColPanel, ColBorder, 2.f * S());
+	Text(TEXT("MATCH SETTINGS"), SX + 30.f * S(), SY + 20.f * S(), ColAccent, 1.f, MediumFont());
+	SY += 76.f * S();
+	static const TCHAR* Difficulty[3] = { TEXT("Easy"), TEXT("Normal"), TEXT("Hard") };
+	static const TCHAR* Themes[4] = { TEXT("Temperate"), TEXT("Winter"), TEXT("Desert"), TEXT("Dusk") };
+	const FCmdSkirmishSettings& L = GS->LobbySettings;
+	struct FRow { FString Label; FString Value; FName Action; };
+	const TArray<FRow> Rows = {
+		{ TEXT("AI opponents"), FString::FromInt(L.NumEnemies), TEXT("lbs_enemies") },
+		{ TEXT("AI difficulty"), Difficulty[FMath::Clamp(L.Difficulty, 0, 2)], TEXT("lbs_diff") },
+		{ TEXT("AI teams"), L.bAlliedAI ? TEXT("Allied") : TEXT("Free-for-all"), TEXT("lbs_aiteam") },
+		{ TEXT("Map size"), L.MapSize <= 64 ? TEXT("Small") : (L.MapSize <= 80 ? TEXT("Medium") : TEXT("Large")), TEXT("lbs_size") },
+		{ TEXT("Credits"), FString::Printf(TEXT("$%s"), *FormatCredits(L.StartingCredits)), TEXT("lbs_credits") },
+		{ TEXT("Theatre"), Themes[FMath::Clamp(L.Theme, 0, 3)], TEXT("lbs_theme") },
+	};
+	for (const FRow& R : Rows)
+	{
+		Text(R.Label, SX + 30.f * S(), SY + 10.f * S(), ColText, 0.9f, SmallFont());
+		const float VX = SX + SW - 250.f * S();
+		if (bHost)
+		{
+			Button(TEXT("<"), VX, SY, 44.f * S(), 44.f * S(), R.Action, NAME_None, -1);
+			Button(TEXT(">"), VX + 196.f * S(), SY, 44.f * S(), 44.f * S(), R.Action, NAME_None, 1);
+		}
+		Text(R.Value, VX + 120.f * S(), SY + 10.f * S(), ColAccent, 0.95f, SmallFont(), true);
+		SY += 56.f * S();
+	}
+
+	// Chat --------------------------------------------------------------------
+	const float CY = 670.f * S();
+	const float CH = H - CY - 150.f * S();
+	Panel(PX, CY, W - 2.f * PX, CH, FLinearColor(0.f, 0.f, 0.f, 0.6f), ColBorder, 1.f);
+	float LY = CY + 14.f * S();
+	const int32 MaxLines = FMath::Max(1, FMath::FloorToInt((CH - 70.f * S()) / (26.f * S())));
+	for (int32 i = FMath::Max(0, GS->ChatLog.Num() - MaxLines); i < GS->ChatLog.Num(); ++i)
+	{
+		Text(GS->ChatLog[i].Text, PX + 20.f * S(), LY, GS->ChatLog[i].Color, 0.85f, SmallFont());
+		LY += 26.f * S();
+	}
+	const bool bChatting = PC->GetTextField() == TEXT("chat");
+	const FString Prompt = bChatting ? FString::Printf(TEXT("Say: %s%s"), *PC->GetTextBuffer(), FMath::Fmod(Time, 1.f) < 0.55f ? TEXT("_") : TEXT("")) : TEXT("Press Enter (or click here) to chat");
+	Text(Prompt, PX + 20.f * S(), CY + CH - 40.f * S(), bChatting ? ColText : ColDim, 0.85f, SmallFont());
+	AddHitArea(PX, CY + CH - 50.f * S(), W - 2.f * PX, 50.f * S(), TEXT("lb_chat"));
+
+	// Actions -----------------------------------------------------------------
+	const float BY = H - 110.f * S();
+	Button(TEXT("LEAVE"), 60.f * S(), BY + 6.f * S(), 220.f * S(), 52.f * S(), TEXT("to_menu"));
+	if (bHost)
+	{
+		Button(TEXT("START MATCH"), W - 380.f * S(), BY, 320.f * S(), 64.f * S(), TEXT("lb_start"), NAME_None, 0, true, true, 1.2f);
+	}
+	else
+	{
+		Text(TEXT("The host starts the match when everyone is ready."), W - 60.f * S() - Measure(TEXT("The host starts the match when everyone is ready."), 0.9f, SmallFont()).X, BY + 22.f * S(), ColDim, 0.9f, SmallFont());
+	}
+	if (!LobbyError.IsEmpty() && Time - LobbyErrorTime < 5.f)
+	{
+		Text(LobbyError, W * 0.5f, BY - 36.f * S(), ColBad, 0.95f, MediumFont(), true);
+	}
+}
+
+void ACmdHUD::DrawChatLine()
+{
+	const ACmdPlayerController* PC = GetPC();
+	if (!PC || PC->GetTextField() != TEXT("chat"))
+	{
+		return;
+	}
+	const float Y = Canvas->ClipY * 0.55f - 50.f * S();
+	const FString ChatText = FString::Printf(TEXT("Say: %s%s"), *PC->GetTextBuffer(), FMath::Fmod(Time, 1.f) < 0.55f ? TEXT("_") : TEXT(""));
+	Panel(16.f * S(), Y - 6.f * S(), 760.f * S(), 40.f * S(), FLinearColor(0.f, 0.f, 0.f, 0.7f), ColAccent, 1.f);
+	Text(ChatText, 28.f * S(), Y, ColText, 0.85f, MediumFont());
+}
+
+void ACmdHUD::DrawSpectatorBanner()
+{
+	const ACmdPlayerController* PC = GetPC();
+	if (!PC || !PC->IsSpectating())
+	{
+		return;
+	}
+	const FString Banner = TEXT("ELIMINATED - SPECTATING");
+	Text(Banner, (Canvas->ClipX - SidebarW) * 0.5f, 40.f * S(), ColBad, 1.3f, LargeFont(), true);
+	Text(TEXT("Esc: leave the match"), (Canvas->ClipX - SidebarW) * 0.5f, 90.f * S(), ColDim, 0.85f, SmallFont(), true);
 }

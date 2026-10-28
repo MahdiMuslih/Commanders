@@ -121,12 +121,16 @@ public:
 	FString DefeatText;
 	int32 PlayerTeam = 0;
 
+	/** Networked match: every human gets their own result; the match ends when one side remains. */
+	bool bMultiplayer = false;
+
 private:
 	bool EvaluateCondition(const TSharedPtr<FJsonObject>& Condition);
 	bool IsAreaOccupied(const TSharedPtr<FJsonObject>& Json);
 	bool IsTagDestroyed(FName Tag) const;
 	void UpdateObjectives();
 	void CheckEndConditions();
+	void CheckMultiplayerEnd();
 	void TickTriggers();
 	void TickDialogue(float DeltaSeconds);
 	void TickTimers(float DeltaSeconds);

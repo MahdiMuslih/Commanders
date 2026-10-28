@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "Subsystems/WorldSubsystem.h"
 #include "Core/CmdTypes.h"
+#include "Game/CmdNetTypes.h"
 #include "CmdGridSubsystem.generated.h"
 
 class ACmdBuilding;
@@ -82,6 +83,11 @@ public:
 	int32 GetOre(const FIntPoint& C) const;
 	void GrowOre();
 
+	/** Networking: the server collects changed ore cells and broadcasts them in batches. */
+	void SetTrackOreChanges(bool bTrack) { bTrackOreChanges = bTrack; DirtyOre.Reset(); }
+	void ConsumeOreChanges(TArray<FCmdOreDelta>& OutChanges);
+	void ApplyOreDelta(int32 Index, int32 Amount);
+
 	// Shroud -----------------------------------------------------------------
 	void RevealCircle(int32 Alliance, const FVector& WorldCenter, float RadiusCells);
 	void RevealAll(int32 Alliance);
@@ -96,6 +102,7 @@ public:
 
 private:
 	float Heuristic(const FIntPoint& A, const FIntPoint& B) const;
+	void MarkOreDirty(int32 Index);
 
 	int32 Width = 0;
 	int32 Height = 0;
@@ -103,6 +110,8 @@ private:
 	TArray<int32> OreCapacity;	// per cell max ore, used for regrowth
 	int32 ViewerAlliance = 0;
 	uint32 Revision = 1;
+	TSet<int32> DirtyOre;
+	bool bTrackOreChanges = false;
 
 	TWeakObjectPtr<ACmdTerrainActor> TerrainActor;
 };

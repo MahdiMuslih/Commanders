@@ -15,7 +15,8 @@ public class Commanders : ModuleRules
 			"Engine",
 			"InputCore",
 			"Json",
-			"EngineSettings"
+			"EngineSettings",
+			"NetCore"
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[]

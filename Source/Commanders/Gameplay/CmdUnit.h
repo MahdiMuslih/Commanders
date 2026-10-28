@@ -17,6 +17,7 @@ public:
 
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaSeconds) override;
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 	// Orders ---------------------------------------------------------------
 	void OrderMove(const FIntPoint& Cell, bool bAttackMove);
@@ -30,7 +31,7 @@ public:
 	bool TryDeploy();
 
 	ECmdOrder GetOrder() const { return Order; }
-	bool IsMoving() const { return PathIndex < Path.Num(); }
+	bool IsMoving() const { return HasAuthority() ? PathIndex < Path.Num() : bNetMoving; }
 	bool IsHarvester() const;
 	bool IsEngineer() const;
 	int32 GetCargo() const { return Cargo; }
@@ -59,7 +60,12 @@ private:
 	ACmdBuilding* FindNearestRefinery() const;
 	float GetSpeedUU() const;
 
+	UPROPERTY(Replicated)
 	ECmdOrder Order = ECmdOrder::Idle;
+
+	UPROPERTY(Replicated)
+	bool bNetMoving = false;
+
 	FIntPoint Goal = FIntPoint::ZeroValue;
 	TWeakObjectPtr<ACmdEntity> OrderTarget;
 	TArray<FVector> Path;
@@ -75,7 +81,10 @@ private:
 
 	// Harvester
 	EHarvest Harvest = EHarvest::None;
+
+	UPROPERTY(Replicated)
 	int32 Cargo = 0;
+
 	float HarvestTimer = 0.f;
 	FIntPoint OreCell = FIntPoint(-1, -1);
 	TWeakObjectPtr<ACmdBuilding> DockTarget;

@@ -37,6 +37,10 @@ ACmdCameraPawn::ACmdCameraPawn()
 	bUseControllerRotationYaw = false;
 	bUseControllerRotationPitch = false;
 	SetActorEnableCollision(false);
+
+	// The view is purely local: the server spawns the pawn for each player, but its
+	// position is never sent back and forth.
+	SetReplicatingMovement(false);
 }
 
 void ACmdCameraPawn::SetBounds(const FVector& Min, const FVector& Max)

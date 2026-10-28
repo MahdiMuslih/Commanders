@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "Core/CmdTypes.h"
+#include "Engine/NetSerialization.h"
 #include "CmdEntity.generated.h"
 
 struct FCmdEntityDef;
@@ -28,21 +29,37 @@ public:
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type Reason) override;
 	virtual void Tick(float DeltaSeconds) override;
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
-	// Identity -------------------------------------------------------------
+	// Identity (replicated) ------------------------------------------------
 	const FCmdEntityDef* Def = nullptr;
+
+	UPROPERTY(Replicated)
 	FName DefId;
+
+	UPROPERTY(ReplicatedUsing = OnRep_TeamId)
 	int32 TeamId = 0;
+
+	UPROPERTY(Replicated)
 	FName MissionTag;
 
 	// State ----------------------------------------------------------------
+	UPROPERTY(Replicated)
 	float Health = 1.f;
-	bool bSelected = false;
+
+	UPROPERTY(Replicated)
 	bool bInvulnerable = false;
+
+	UPROPERTY(Replicated)
+	int32 Kills = 0;
+
+	bool bSelected = false;
 	bool bDead = false;
 	float LastDamagedTime = -1000.f;
 	TWeakObjectPtr<ACmdEntity> LastAttacker;
-	int32 Kills = 0;
+
+	/** True on the machine that simulates this entity (standalone, or the server). */
+	bool IsSimulated() const { return HasAuthority(); }
 
 	virtual bool IsBuilding() const { return false; }
 	bool IsAircraft() const;
@@ -59,6 +76,9 @@ public:
 	ACmdGameState* GetCmdGameState() const;
 
 	virtual void SetTeam(int32 NewTeam);
+
+	/** Re-tints the model (clients call this once the team list has replicated). */
+	void RefreshTeamColor();
 	virtual void ApplyDamage(float Amount, ECmdWarhead Warhead, ACmdEntity* DamageSource);
 	virtual void Die(ACmdEntity* Killer);
 	void Heal(float Amount);
@@ -82,6 +102,25 @@ public:
 	const TArray<UStaticMeshComponent*>& GetPartComponents() const { return PartComponents; }
 
 protected:
+	/** Looks up Def / Weapon from DefId (clients do this when the entity replicates in). */
+	void ResolveDefinition();
+
+	UFUNCTION()
+	void OnRep_TeamId(int32 OldTeamId);
+
+	/** Server: publish transform for clients. Clients: glide towards the published transform. */
+	void PublishNetTransform();
+	void TickNetSmoothing(float DeltaSeconds);
+
+	UPROPERTY(Replicated)
+	FVector_NetQuantize NetLocation;
+
+	UPROPERTY(Replicated)
+	uint16 NetYaw = 0;
+
+	UPROPERTY(Replicated)
+	uint16 NetTurretYaw = 0;
+
 	virtual bool CanFireNow() const { return true; }
 	virtual bool CanAutoAcquire() const { return true; }
 	virtual bool NeedsToFaceTarget() const;

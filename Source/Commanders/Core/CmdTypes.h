@@ -61,7 +61,8 @@ enum class ECmdFlowState : uint8
 	Cinematic,
 	Playing,
 	Victory,
-	Defeat
+	Defeat,
+	Lobby		// multiplayer: players gathering before the match starts
 };
 
 UENUM(BlueprintType)
@@ -69,7 +70,40 @@ enum class ECmdSessionMode : uint8
 {
 	Menu,
 	Campaign,
-	Skirmish
+	Skirmish,
+	MultiplayerHost,	// listen server: lobby, then a networked skirmish
+	MultiplayerClient	// connected to someone else's game
+};
+
+/** Per-player outcome of a networked match. */
+UENUM(BlueprintType)
+enum class ECmdMatchResult : uint8
+{
+	None,
+	Victory,
+	Defeat
+};
+
+/** Every player action that changes the simulation travels to the server as one of these. */
+UENUM(BlueprintType)
+enum class ECmdCommandType : uint8
+{
+	Move,
+	AttackMove,
+	Target,			// smart right-click on an entity: attack / capture / dock / follow
+	ForceTarget,	// ctrl + right-click: attack anything
+	Stop,
+	Guard,
+	Deploy,
+	Harvest,
+	Queue,
+	Cancel,
+	Hold,
+	Place,
+	Sell,
+	Repair,
+	Rally,
+	Primary
 };
 
 namespace CmdConst
@@ -79,6 +113,7 @@ namespace CmdConst
 	constexpr int32 MaxAlliances = 8;
 	constexpr int32 CategoryCount = static_cast<int32>(ECmdCategory::Count);
 	constexpr float OreValuePerBale = 25.f;
+	constexpr int32 MaxPlayers = 4;
 }
 
 namespace Cmd

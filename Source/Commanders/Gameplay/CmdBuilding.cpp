@@ -5,10 +5,22 @@
 #include "Data/CmdDataRegistry.h"
 #include "World/CmdGridSubsystem.h"
 #include "Engine/World.h"
+#include "Net/UnrealNetwork.h"
 
 ACmdBuilding::ACmdBuilding()
 {
 	PrimaryActorTick.bCanEverTick = true;
+	NetUpdateFrequency = 4.f;
+}
+
+void ACmdBuilding::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(ACmdBuilding, Origin);
+	DOREPLIFETIME(ACmdBuilding, RallyCell);
+	DOREPLIFETIME(ACmdBuilding, bPrimary);
+	DOREPLIFETIME(ACmdBuilding, bRepairing);
+	DOREPLIFETIME(ACmdBuilding, BuildProgress);
 }
 
 void ACmdBuilding::SetOrigin(const FIntPoint& InOrigin, bool bAnimateConstruction)
@@ -29,7 +41,7 @@ void ACmdBuilding::BeginPlay()
 	}
 	Super::BeginPlay();
 
-	if (Def && Def->Footprint.Y > 0)
+	if (Def && Def->Footprint.Y > 0 && HasAuthority())
 	{
 		RallyCell = GetExitCell() + FIntPoint(0, 2);
 	}
@@ -130,6 +142,18 @@ bool ACmdBuilding::CanFireNow() const
 
 void ACmdBuilding::Tick(float DeltaSeconds)
 {
+	if (!HasAuthority())
+	{
+		// Clients play the build-up animation from the replicated progress, nothing else.
+		const float Z = BuildProgress < 1.f ? FMath::InterpEaseOut(0.02f, 1.f, BuildProgress, 2.f) : 1.f;
+		Body->SetRelativeScale3D(FVector(1.f, 1.f, Z));
+		Super::Tick(DeltaSeconds);
+		if (IsAlive())
+		{
+			TickDamageSmoke(DeltaSeconds);
+		}
+		return;
+	}
 	if (BuildProgress < 1.f)
 	{
 		// Classic "build-up" animation.
@@ -217,10 +241,10 @@ void ACmdBuilding::TickDamageSmoke(float DeltaSeconds)
 	{
 		SmokeTimer = GetHealthPct() < 0.25f ? 0.35f : 0.8f;
 		const FVector Off(FMath::FRandRange(-0.4f, 0.4f) * GetRadius(), FMath::FRandRange(-0.4f, 0.4f) * GetRadius(), GetBarHeight() * 0.6f);
-		ACmdEffect::SpawnSmoke(GetWorld(), GetActorLocation() + Off, 0.8f);
+		ACmdEffect::SpawnSmokeLocal(GetWorld(), GetActorLocation() + Off, 0.8f);
 		if (GetHealthPct() < 0.25f && FMath::FRand() < 0.3f)
 		{
-			ACmdEffect::SpawnFlash(GetWorld(), GetActorLocation() + Off, FLinearColor(1.f, 0.4f, 0.1f), 0.5f);
+			ACmdEffect::SpawnFlashLocal(GetWorld(), GetActorLocation() + Off, FLinearColor(1.f, 0.4f, 0.1f), 0.5f);
 		}
 	}
 }

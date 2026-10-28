@@ -2,6 +2,8 @@
 #include "Audio/CmdAudioSubsystem.h"
 #include "Game/CmdGameState.h"
 #include "Game/CmdGameInstance.h"
+#include "Game/CmdPlayerState.h"
+#include "World/CmdWorldBuilder.h"
 #include "Player/CmdPlayerController.h"
 #include "Player/CmdCameraPawn.h"
 #include "UI/CmdHUD.h"
@@ -19,12 +21,14 @@
 #include "Engine/World.h"
 #include "EngineUtils.h"
 #include "Engine/DirectionalLight.h"
+#include "GameFramework/PlayerState.h"
 
 ACmdGameMode::ACmdGameMode()
 {
 	PrimaryActorTick.bCanEverTick = true;
 	GameStateClass = ACmdGameState::StaticClass();
 	PlayerControllerClass = ACmdPlayerController::StaticClass();
+	PlayerStateClass = ACmdPlayerState::StaticClass();
 	DefaultPawnClass = ACmdCameraPawn::StaticClass();
 	HUDClass = ACmdHUD::StaticClass();
 }
@@ -42,6 +46,17 @@ void ACmdGameMode::StartPlay()
 	UCmdGameInstance* GI = Cast<UCmdGameInstance>(GetGameInstance());
 	const UCmdDataRegistry* Data = UCmdDataRegistry::Get(this);
 	SessionMode = GI ? GI->Mode : ECmdSessionMode::Menu;
+
+	if (SessionMode == ECmdSessionMode::MultiplayerHost)
+	{
+		StartLobby();
+		return;
+	}
+	if (SessionMode == ECmdSessionMode::MultiplayerClient)
+	{
+		// We are a client that lost its server and fell back to a local level.
+		SessionMode = ECmdSessionMode::Menu;
+	}
 
 	TSharedPtr<FJsonObject> Scenario;
 	if (SessionMode == ECmdSessionMode::Campaign && GI && Data)
@@ -80,60 +95,17 @@ void ACmdGameMode::BuildScenario(const TSharedPtr<FJsonObject>& Scenario, bool b
 		return;
 	}
 
-	const TSharedPtr<FJsonObject> Map = CmdJson::Obj(Scenario, TEXT("map"));
-	Grid->InitGrid(CmdJson::Int(Map, TEXT("width"), 64), CmdJson::Int(Map, TEXT("height"), 64));
-
 	SetupTeams(Scenario, bIsMenu);
-
-	// Keep decoration away from where entities start.
-	TArray<FIntRect> KeepClear;
-	for (const TSharedPtr<FJsonValue>& V : CmdJson::Arr(Scenario, TEXT("entities")))
-	{
-		const TSharedPtr<FJsonObject> E = V->AsObject();
-		const FIntPoint At = CmdJson::Cell(E, TEXT("at"), FIntPoint(0, 0));
-		const FCmdEntityDef* Def = Data->GetEntity(CmdJson::Name(E, TEXT("type")));
-		const FIntPoint Size = Def ? Def->Footprint : FIntPoint(1, 1);
-		KeepClear.Add(FIntRect(At - FIntPoint(1, 1), At + Size + FIntPoint(1, 2)));
-	}
-	BuildTerrain(Map, KeepClear);
 
 	const bool bShroud = !bIsMenu && CmdJson::Bool(Scenario, TEXT("shroud"), true);
 	GS->bShroudEnabled = bShroud;
-	Grid->SetShroudViewer(bShroud ? GS->GetLocalAlliance() : -1);
-
-	FActorSpawnParameters Params;
-	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-	const FCmdMapTheme Theme = FCmdMapTheme::FromName(CmdJson::Str(Map, TEXT("theme"), TEXT("temperate")));
-	Terrain = World->SpawnActor<ACmdTerrainActor>(ACmdTerrainActor::StaticClass(), FTransform::Identity, Params);
-	Terrain->Build(Theme, bShroud);
-
-	bool bHasSun = false;
-	for (TActorIterator<ADirectionalLight> It(World); It; ++It)
-	{
-		bHasSun = true;
-	}
-	if (!bHasSun)
-	{
-		Environment = World->SpawnActor<ACmdEnvironmentActor>(ACmdEnvironmentActor::StaticClass(), FTransform::Identity, Params);
-		Environment->ApplyTheme(Theme);
-	}
+	const FCmdBuiltWorld Built = CmdWorldBuilder::BuildEnvironment(World, Scenario, bShroud, GS->GetLocalAlliance(), GS->LocalTeamId);
+	Terrain = Built.Terrain;
+	Environment = Built.Environment;
+	CameraStart = Built.CameraStart;
+	Grid->SetTrackOreChanges(GS->IsNetworked());
 
 	SpawnEntities(Scenario);
-
-	// Initial camera: explicit, else the player's first entity, else the map centre.
-	const FIntPoint CamCell = CmdJson::Cell(Scenario, TEXT("camera"));
-	if (CamCell.X >= 0)
-	{
-		CameraStart = Cmd::CellToWorld(CamCell);
-	}
-	else if (const FCmdTeam* Local = GS->GetLocalTeam())
-	{
-		CameraStart = Cmd::CellToWorld(Local->StartCell);
-	}
-	else
-	{
-		CameraStart = Grid->GetMapCenter();
-	}
 
 	// AI commanders.
 	for (const FCmdTeam& T : GS->Teams)
@@ -175,7 +147,8 @@ void ACmdGameMode::BuildScenario(const TSharedPtr<FJsonObject>& Scenario, bool b
 	DirectorParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 	Director = World->SpawnActor<ACmdMissionDirector>(ACmdMissionDirector::StaticClass(), FTransform::Identity, DirectorParams);
 	GS->MissionDirector = Director;
-	Director->InitMission(Scenario, SessionMode == ECmdSessionMode::Skirmish);
+	Director->InitMission(Scenario, SessionMode != ECmdSessionMode::Campaign);
+	Director->bMultiplayer = IsMultiplayer();
 
 	// Start the flow on the next tick so the player controller and HUD exist.
 	FTimerHandle Handle;
@@ -207,6 +180,7 @@ void ACmdGameMode::SetupTeams(const TSharedPtr<FJsonObject>& Scenario, bool bIsM
 		T.Credits = CmdJson::Num(J, TEXT("credits"), 0.0);
 		T.bIsLocalPlayer = !bIsMenu && CmdJson::Bool(J, TEXT("player"), false);
 		T.bIsAI = CmdJson::Bool(J, TEXT("ai"), false);
+		T.bIsHuman = CmdJson::Bool(J, TEXT("human"), T.bIsLocalPlayer);
 		T.bIsNeutral = CmdJson::Bool(J, TEXT("neutral"), false);
 		T.bCanBuild = CmdJson::Bool(J, TEXT("can_build"), true);
 		T.TechLock = CmdJson::Names(J, TEXT("locked"));
@@ -230,118 +204,6 @@ void ACmdGameMode::SetupTeams(const TSharedPtr<FJsonObject>& Scenario, bool bIsM
 			GS->LocalTeamId = Id;
 		}
 		++Index;
-	}
-}
-
-void ACmdGameMode::BuildTerrain(const TSharedPtr<FJsonObject>& Map, const TArray<FIntRect>& KeepClear)
-{
-	UCmdGridSubsystem* Grid = GetWorld()->GetSubsystem<UCmdGridSubsystem>();
-
-	auto ForEachRect = [&Map](const TCHAR* Key, TFunctionRef<void(const FIntRect&)> Fn)
-	{
-		for (const TSharedPtr<FJsonValue>& V : CmdJson::Arr(Map, Key))
-		{
-			const TArray<double> N = CmdJson::Numbers(V);
-			if (N.Num() >= 4)
-			{
-				const int32 X = FMath::FloorToInt(N[0]);
-				const int32 Y = FMath::FloorToInt(N[1]);
-				Fn(FIntRect(X, Y, X + FMath::Max(1, FMath::FloorToInt(N[2])), Y + FMath::Max(1, FMath::FloorToInt(N[3]))));
-			}
-			else if (N.Num() >= 2)
-			{
-				const int32 X = FMath::FloorToInt(N[0]);
-				const int32 Y = FMath::FloorToInt(N[1]);
-				Fn(FIntRect(X, Y, X + 1, Y + 1));
-			}
-		}
-	};
-
-	auto IsKeptClear = [&KeepClear](const FIntPoint& C)
-	{
-		for (const FIntRect& R : KeepClear)
-		{
-			if (C.X >= R.Min.X && C.X < R.Max.X && C.Y >= R.Min.Y && C.Y < R.Max.Y)
-			{
-				return true;
-			}
-		}
-		return false;
-	};
-
-	auto Paint = [&](const FIntRect& R, ECmdTerrain Type)
-	{
-		for (int32 Y = R.Min.Y; Y < R.Max.Y; ++Y)
-		{
-			for (int32 X = R.Min.X; X < R.Max.X; ++X)
-			{
-				const FIntPoint C(X, Y);
-				if (Type == ECmdTerrain::Road || !IsKeptClear(C))
-				{
-					Grid->SetTerrain(C, Type);
-				}
-			}
-		}
-	};
-
-	// Roads go last so they can bridge rivers.
-	ForEachRect(TEXT("water"), [&](const FIntRect& R) { Paint(R, ECmdTerrain::Water); });
-	ForEachRect(TEXT("rocks"), [&](const FIntRect& R) { Paint(R, ECmdTerrain::Rock); });
-	ForEachRect(TEXT("trees"), [&](const FIntRect& R) { Paint(R, ECmdTerrain::Tree); });
-	ForEachRect(TEXT("roads"), [&](const FIntRect& R) { Paint(R, ECmdTerrain::Road); });
-
-	// Optional random scatter for hand-made maps.
-	FRandomStream Rng(CmdJson::Int(Map, TEXT("seed"), 1));
-	const double TreeDensity = CmdJson::Num(Map, TEXT("random_trees"), 0.0);
-	const double RockDensity = CmdJson::Num(Map, TEXT("random_rocks"), 0.0);
-	if (TreeDensity > 0.0 || RockDensity > 0.0)
-	{
-		TArray<FIntRect> Clear;
-		ForEachRect(TEXT("clear"), [&](const FIntRect& R) { Clear.Add(R); });
-		for (int32 Y = 1; Y < Grid->GetHeight() - 1; ++Y)
-		{
-			for (int32 X = 1; X < Grid->GetWidth() - 1; ++X)
-			{
-				const FIntPoint C(X, Y);
-				if (IsKeptClear(C) || Grid->GetCell(C)->Terrain != ECmdTerrain::Clear)
-				{
-					continue;
-				}
-				bool bInClear = false;
-				for (const FIntRect& R : Clear)
-				{
-					bInClear |= C.X >= R.Min.X && C.X < R.Max.X && C.Y >= R.Min.Y && C.Y < R.Max.Y;
-				}
-				if (bInClear)
-				{
-					continue;
-				}
-				const float Roll = Rng.FRand();
-				if (Roll < TreeDensity)
-				{
-					Grid->SetTerrain(C, ECmdTerrain::Tree);
-				}
-				else if (Roll < TreeDensity + RockDensity)
-				{
-					Grid->SetTerrain(C, ECmdTerrain::Rock);
-				}
-			}
-		}
-	}
-
-	for (const TSharedPtr<FJsonValue>& V : CmdJson::Arr(Map, TEXT("ore")))
-	{
-		const TSharedPtr<FJsonObject> O = V->AsObject();
-		Grid->AddOreField(CmdJson::Cell(O, TEXT("at"), FIntPoint(0, 0)), CmdJson::Num(O, TEXT("radius"), 3.0), CmdJson::Int(O, TEXT("richness"), 8), CmdJson::Bool(O, TEXT("gems"), false));
-	}
-
-	// Border cliffs keep units on the map.
-	if (CmdJson::Bool(Map, TEXT("border"), false))
-	{
-		Grid->FillTerrain(FIntRect(0, 0, Grid->GetWidth(), 1), ECmdTerrain::Rock);
-		Grid->FillTerrain(FIntRect(0, Grid->GetHeight() - 1, Grid->GetWidth(), Grid->GetHeight()), ECmdTerrain::Rock);
-		Grid->FillTerrain(FIntRect(0, 0, 1, Grid->GetHeight()), ECmdTerrain::Rock);
-		Grid->FillTerrain(FIntRect(Grid->GetWidth() - 1, 0, Grid->GetWidth(), Grid->GetHeight()), ECmdTerrain::Rock);
 	}
 }
 
@@ -407,4 +269,257 @@ void ACmdGameMode::Tick(float DeltaSeconds)
 			AI->Tick(DeltaSeconds);
 		}
 	}
+}
+
+// ---------------------------------------------------------------------------
+// Multiplayer: lobby, joining and leaving
+// ---------------------------------------------------------------------------
+
+void ACmdGameMode::StartLobby()
+{
+	ACmdGameState* GS = GetGameState<ACmdGameState>();
+	UCmdGameInstance* GI = Cast<UCmdGameInstance>(GetGameInstance());
+	if (!GS)
+	{
+		return;
+	}
+	GS->Flow = ECmdFlowState::Lobby;
+	GS->bShroudEnabled = false;
+	if (GI)
+	{
+		GS->LobbySettings = GI->Skirmish;
+		GS->LobbySettings.NumEnemies = FMath::Clamp(GS->LobbySettings.NumEnemies, 0, CmdConst::MaxPlayers - 1);
+	}
+	// A sky over the empty lobby world.
+	FActorSpawnParameters Params;
+	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+	Environment = GetWorld()->SpawnActor<ACmdEnvironmentActor>(ACmdEnvironmentActor::StaticClass(), FTransform::Identity, Params);
+	if (Environment)
+	{
+		Environment->ApplyTheme(FCmdMapTheme::FromName(TEXT("dusk")));
+	}
+	UE_LOG(LogCommanders, Log, TEXT("Hosting a multiplayer lobby."));
+}
+
+void ACmdGameMode::PreLogin(const FString& Options, const FString& Address, const FUniqueNetIdRepl& UniqueId, FString& ErrorMessage)
+{
+	Super::PreLogin(Options, Address, UniqueId, ErrorMessage);
+	if (!ErrorMessage.IsEmpty())
+	{
+		return;
+	}
+	const ACmdGameState* GS = GetGameState<ACmdGameState>();
+	if (!IsMultiplayer())
+	{
+		ErrorMessage = TEXT("This game is not hosting.");
+	}
+	else if (!GS || GS->Flow != ECmdFlowState::Lobby)
+	{
+		ErrorMessage = TEXT("The match has already started.");
+	}
+	else if (GetNumPlayers() >= CmdConst::MaxPlayers)
+	{
+		ErrorMessage = TEXT("The game is full.");
+	}
+}
+
+void ACmdGameMode::PostLogin(APlayerController* NewPlayer)
+{
+	Super::PostLogin(NewPlayer);
+	ACmdGameState* GS = GetGameState<ACmdGameState>();
+	ACmdPlayerState* PS = NewPlayer ? NewPlayer->GetPlayerState<ACmdPlayerState>() : nullptr;
+	if (!IsMultiplayer() || !GS || !PS)
+	{
+		return;
+	}
+	PS->bIsHost = NewPlayer->IsLocalController();
+	PS->bReady = PS->bIsHost;
+
+	// Free-for-all by default: the lowest side nobody has picked yet.
+	TSet<int32> Taken;
+	for (APlayerState* Other : GS->PlayerArray)
+	{
+		if (const ACmdPlayerState* O = Cast<ACmdPlayerState>(Other))
+		{
+			if (O != PS)
+			{
+				Taken.Add(O->Alliance);
+			}
+		}
+	}
+	PS->Alliance = 0;
+	while (Taken.Contains(PS->Alliance) && PS->Alliance < CmdConst::MaxPlayers - 1)
+	{
+		++PS->Alliance;
+	}
+	if (PS->bIsHost)
+	{
+		if (const UCmdGameInstance* GI = Cast<UCmdGameInstance>(GetGameInstance()))
+		{
+			PS->Faction = GI->Skirmish.PlayerFaction;
+			if (!GI->GetPlayerName().IsEmpty())
+			{
+				ChangeName(NewPlayer, GI->GetPlayerName(), false);
+			}
+		}
+	}
+	if (PS->GetPlayerName().IsEmpty())
+	{
+		ChangeName(NewPlayer, FString::Printf(TEXT("Commander %d"), GetNumPlayers()), false);
+	}
+	if (!PS->bIsHost)
+	{
+		GS->AddMessage(INDEX_NONE, FString::Printf(TEXT("%s joined the game."), *PS->GetPlayerName()), FLinearColor(0.6f, 0.9f, 1.f), TEXT("message"));
+	}
+}
+
+void ACmdGameMode::Logout(AController* Exiting)
+{
+	ACmdGameState* GS = GetGameState<ACmdGameState>();
+	const ACmdPlayerState* PS = Exiting ? Exiting->GetPlayerState<ACmdPlayerState>() : nullptr;
+	if (IsMultiplayer() && GS && PS && !PS->bIsHost)
+	{
+		FString Text = FString::Printf(TEXT("%s left the game."), *PS->GetPlayerName());
+		// Mid-match: an AI commander takes over the abandoned side so the battle stays fair.
+		FCmdTeam* Team = GS->GetTeam(PS->SlotTeam);
+		if (Team && !Team->bDefeated && GS->Flow == ECmdFlowState::Playing)
+		{
+			Team->bIsAI = true;
+			Team->bIsHuman = false;
+			UCmdAICommander* AI = NewObject<UCmdAICommander>(this);
+			AI->Init(GetWorld(), Team->Id, 1);
+			AICommanders.Add(AI);
+			Text += TEXT(" The AI takes command of their forces.");
+		}
+		GS->AddMessage(INDEX_NONE, Text, FLinearColor(1.f, 0.7f, 0.4f), TEXT("message"));
+	}
+	Super::Logout(Exiting);
+}
+
+FCmdMatchConfig ACmdGameMode::BuildMatchConfig(FString& OutError) const
+{
+	FCmdMatchConfig Config;
+	const ACmdGameState* GS = GetGameState<ACmdGameState>();
+	if (!GS)
+	{
+		OutError = TEXT("No game state.");
+		return Config;
+	}
+	const FCmdSkirmishSettings& S = GS->LobbySettings;
+
+	// Humans first, host leading, then everyone in join order.
+	TArray<const ACmdPlayerState*> Humans;
+	for (APlayerState* P : GS->PlayerArray)
+	{
+		if (const ACmdPlayerState* PS = Cast<ACmdPlayerState>(P))
+		{
+			Humans.Add(PS);
+		}
+	}
+	Humans.StableSort([](const ACmdPlayerState& A, const ACmdPlayerState& B) { return A.bIsHost && !B.bIsHost; });
+	for (const ACmdPlayerState* PS : Humans)
+	{
+		if (!PS->bReady)
+		{
+			OutError = FString::Printf(TEXT("Waiting for %s to get ready."), *PS->GetPlayerName());
+			return Config;
+		}
+		FCmdMatchSlot Slot;
+		Slot.Name = PS->GetPlayerName();
+		Slot.Faction = PS->Faction;
+		Slot.Alliance = PS->Alliance;
+		Slot.bHuman = true;
+		Slot.PlayerId = PS->GetPlayerId();
+		Slot.Difficulty = S.Difficulty;
+		Config.Slots.Add(Slot);
+	}
+
+	const int32 AICount = FMath::Clamp(S.NumEnemies, 0, CmdConst::MaxPlayers - Config.Slots.Num());
+	for (int32 i = 0; i < AICount; ++i)
+	{
+		FCmdMatchSlot Slot;
+		Slot.Name = FString::Printf(TEXT("AI Commander %d"), i + 1);
+		Slot.Faction = (i % 2 == 0) ? FName(TEXT("pact")) : FName(TEXT("concord"));
+		Slot.Alliance = S.bAlliedAI ? CmdConst::MaxPlayers : CmdConst::MaxPlayers + i;	// sides 4+ belong to the AI
+		Slot.Difficulty = S.Difficulty;
+		Config.Slots.Add(Slot);
+	}
+
+	TSet<int32> Sides;
+	for (const FCmdMatchSlot& Slot : Config.Slots)
+	{
+		Sides.Add(Slot.Alliance);
+	}
+	if (Sides.Num() < 2)
+	{
+		OutError = TEXT("Everyone is on the same side: add an AI opponent or pick different teams.");
+		return Config;
+	}
+
+	Config.bValid = true;
+	Config.Seed = FMath::RandRange(1, 999999);
+	Config.MapSize = S.MapSize;
+	Config.Theme = S.Theme;
+	Config.StartingCredits = S.StartingCredits;
+	return Config;
+}
+
+FString ACmdGameMode::StartMatchFromLobby()
+{
+	ACmdGameState* GS = GetGameState<ACmdGameState>();
+	if (!IsMultiplayer() || !GS || GS->Flow != ECmdFlowState::Lobby)
+	{
+		return TEXT("Not in a lobby.");
+	}
+	FString Error;
+	const FCmdMatchConfig Config = BuildMatchConfig(Error);
+	if (!Config.bValid)
+	{
+		return Error;
+	}
+
+	// Seat everyone, then build the same world the clients will generate from the config.
+	int32 HostSeat = INDEX_NONE;
+	for (int32 i = 0; i < Config.Slots.Num(); ++i)
+	{
+		for (APlayerState* P : GS->PlayerArray)
+		{
+			ACmdPlayerState* PS = Cast<ACmdPlayerState>(P);
+			if (PS && Config.Slots[i].bHuman && PS->GetPlayerId() == Config.Slots[i].PlayerId)
+			{
+				PS->SlotTeam = i;
+				PS->MatchResult = ECmdMatchResult::None;
+				if (PS->bIsHost)
+				{
+					HostSeat = i;
+				}
+			}
+		}
+	}
+	if (Environment)
+	{
+		Environment->Destroy();	// the match brings its own theatre
+		Environment = nullptr;
+	}
+	if (UCmdGameInstance* GI = Cast<UCmdGameInstance>(GetGameInstance()))
+	{
+		GI->Skirmish = GS->LobbySettings;	// remembered for the rematch lobby
+	}
+	GS->Flow = ECmdFlowState::None;
+	GS->MatchConfig = Config;
+	const TSharedPtr<FJsonObject> Scenario = CmdMapGenerator::GenerateMatch(Config, UCmdDataRegistry::Get(this), HostSeat);
+	ActiveScenario = Scenario;
+	BuildScenario(Scenario, false);
+	return FString();
+}
+
+void ACmdGameMode::ReturnToLobby()
+{
+	if (!IsMultiplayer())
+	{
+		return;
+	}
+	// Reload the level as a listen server; connected clients travel with us.
+	const FString MapPath = UWorld::RemovePIEPrefix(GetWorld()->GetOutermost()->GetName());
+	GetWorld()->ServerTravel(MapPath + TEXT("?listen"), true);
 }

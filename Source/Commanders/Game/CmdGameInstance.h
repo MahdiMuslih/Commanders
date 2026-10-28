@@ -3,9 +3,11 @@
 #include "CoreMinimal.h"
 #include "Engine/GameInstance.h"
 #include "Core/CmdTypes.h"
+#include "Engine/EngineBaseTypes.h"
 #include "CmdGameInstance.generated.h"
 
 class UCmdSaveGame;
+class UNetDriver;
 
 USTRUCT(BlueprintType)
 struct FCmdSkirmishSettings
@@ -19,6 +21,7 @@ struct FCmdSkirmishSettings
 	UPROPERTY() int32 StartingCredits = 5000;
 	UPROPERTY() int32 Seed = 0;
 	UPROPERTY() int32 Theme = 0;			// 0 temperate, 1 winter, 2 desert, 3 dusk
+	UPROPERTY() bool bAlliedAI = false;		// multiplayer: AI opponents fight as one team
 };
 
 /** Persists across level loads: which session to build, campaign progress, settings. */
@@ -46,7 +49,27 @@ public:
 	UPROPERTY()
 	TObjectPtr<UCmdSaveGame> Save;
 
+	virtual void Shutdown() override;
+
 	void StartMission(FName MissionId);
+
+	// Multiplayer ------------------------------------------------------------
+	/** Opens the battlefield as a listen server and shows the lobby. */
+	void HostGame();
+
+	/** Connects to a host ("192.168.1.20" or "host:7777"). */
+	void JoinGame(const FString& Address);
+
+	/** Leaves a networked game (or stops hosting) and returns to the main menu. */
+	void LeaveGame(const FString& Reason = FString());
+
+	FString GetPlayerName() const;
+	void SetPlayerName(const FString& Name);
+	FString GetLastJoinAddress() const;
+
+	/** Why the last networked game ended unexpectedly; shown once by the menu. */
+	UPROPERTY()
+	FString NetworkError;
 	void StartSkirmish(const FCmdSkirmishSettings& Settings);
 	void ReturnToMenu(FName MenuPage = NAME_None);
 	void RestartSession();
@@ -66,4 +89,6 @@ public:
 
 private:
 	void TravelToBattlefield();
+	void HandleNetworkFailure(UWorld* World, UNetDriver* NetDriver, ENetworkFailure::Type FailureType, const FString& ErrorString);
+	void HandleTravelFailure(UWorld* World, ETravelFailure::Type FailureType, const FString& ErrorString);
 };

@@ -19,10 +19,17 @@ class COMMANDERS_API ACmdEffect : public AActor
 public:
 	ACmdEffect();
 
+	/** Gameplay effects: on a networked server these are broadcast to every machine. */
 	static void SpawnExplosion(UWorld* World, const FVector& Location, float InSize, bool bWithDebris);
 	static void SpawnFlash(UWorld* World, const FVector& Location, const FLinearColor& Color, float InSize);
 	static void SpawnBeam(UWorld* World, const FVector& From, const FVector& To, const FLinearColor& Color);
 	static void SpawnSmoke(UWorld* World, const FVector& Location, float InSize);
+
+	/** This machine only (UI feedback, cosmetic projectiles, replicated effect playback). */
+	static void SpawnExplosionLocal(UWorld* World, const FVector& Location, float InSize, bool bWithDebris);
+	static void SpawnFlashLocal(UWorld* World, const FVector& Location, const FLinearColor& Color, float InSize);
+	static void SpawnBeamLocal(UWorld* World, const FVector& From, const FVector& To, const FLinearColor& Color);
+	static void SpawnSmokeLocal(UWorld* World, const FVector& Location, float InSize);
 
 	virtual void Tick(float DeltaSeconds) override;
 

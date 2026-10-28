@@ -1,4 +1,5 @@
 #include "Mission/CmdMissionDirector.h"
+#include "Game/CmdPlayerState.h"
 #include "Audio/CmdAudioSubsystem.h"
 #include "Mission/CmdCinematicDirector.h"
 #include "Game/CmdGameState.h"
@@ -176,6 +177,10 @@ void ACmdMissionDirector::BeginPlaying()
 	}
 	bPlaying = true;
 	State->Flow = ECmdFlowState::Playing;
+	if (bMultiplayer)
+	{
+		Objectives.Reset();	// last side standing wins; results are per player
+	}
 	for (FCmdObjective& O : Objectives)
 	{
 		O.ActivatedAt = MissionTime;
@@ -313,7 +318,11 @@ void ACmdMissionDirector::Tick(float DeltaSeconds)
 	{
 		EvalTimer = 0.25f;
 		TickTriggers();
-		if (!bEnded)
+		if (!bEnded && bMultiplayer)
+		{
+			CheckMultiplayerEnd();
+		}
+		else if (!bEnded)
 		{
 			UpdateObjectives();
 			CheckEndConditions();
@@ -611,6 +620,69 @@ void ACmdMissionDirector::CheckEndConditions()
 		}
 		EndMission(true, FString());
 	}
+}
+
+void ACmdMissionDirector::CheckMultiplayerEnd()
+{
+	ACmdGameState* State = GS();
+	if (!State || bEnded)
+	{
+		return;
+	}
+
+	// Players whose side has been wiped out lose now and may keep watching.
+	for (APlayerState* P : State->PlayerArray)
+	{
+		ACmdPlayerState* PS = Cast<ACmdPlayerState>(P);
+		const FCmdTeam* Team = PS ? State->GetTeam(PS->SlotTeam) : nullptr;
+		if (Team && Team->bDefeated && PS->MatchResult == ECmdMatchResult::None)
+		{
+			PS->MatchResult = ECmdMatchResult::Defeat;
+			State->AddMessage(Team->Id, TEXT("You have been defeated. Keep watching, or leave from the menu (Esc)."), FLinearColor(1.f, 0.35f, 0.3f), TEXT("objective_failed"));
+		}
+	}
+
+	TSet<int32> AliveSides;
+	for (const FCmdTeam& T : State->Teams)
+	{
+		if (!T.bIsNeutral && !T.bDefeated)
+		{
+			AliveSides.Add(T.Alliance);
+		}
+	}
+	if (AliveSides.Num() > 1)
+	{
+		return;
+	}
+
+	bool bHostWon = false;
+	FString Winners;
+	for (const FCmdTeam& T : State->Teams)
+	{
+		if (!T.bIsNeutral && AliveSides.Contains(T.Alliance))
+		{
+			Winners += Winners.IsEmpty() ? T.Name : FString::Printf(TEXT(", %s"), *T.Name);
+		}
+	}
+	for (APlayerState* P : State->PlayerArray)
+	{
+		ACmdPlayerState* PS = Cast<ACmdPlayerState>(P);
+		const FCmdTeam* Team = PS ? State->GetTeam(PS->SlotTeam) : nullptr;
+		if (!Team)
+		{
+			continue;
+		}
+		if (PS->MatchResult == ECmdMatchResult::None)
+		{
+			PS->MatchResult = AliveSides.Contains(Team->Alliance) ? ECmdMatchResult::Victory : ECmdMatchResult::Defeat;
+		}
+		if (PS->bIsHost)
+		{
+			bHostWon = PS->MatchResult == ECmdMatchResult::Victory;
+		}
+	}
+	State->MatchResultText = Winners.IsEmpty() ? TEXT("No side survived.") : FString::Printf(TEXT("Victory to %s."), *Winners);
+	EndMission(bHostWon, Winners.IsEmpty() ? TEXT("No side survived.") : FString::Printf(TEXT("Victory to %s."), *Winners));
 }
 
 bool ACmdMissionDirector::GetVisibleTimer(FString& OutLabel, float& OutRemaining) const
