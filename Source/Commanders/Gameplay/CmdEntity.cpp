@@ -1,4 +1,5 @@
 #include "Gameplay/CmdEntity.h"
+#include "Audio/CmdAudioSubsystem.h"
 #include "Gameplay/CmdProjectile.h"
 #include "Gameplay/CmdEffect.h"
 #include "Game/CmdGameState.h"
@@ -215,6 +216,14 @@ void ACmdEntity::Die(ACmdEntity* Killer)
 
 	const float Size = IsInfantry() ? 0.5f : (IsBuilding() ? 2.5f : 1.3f);
 	ACmdEffect::SpawnExplosion(GetWorld(), GetActorLocation() + FVector(0.f, 0.f, 40.f), Size, !IsInfantry());
+	if (IsInfantry())
+	{
+		UCmdAudioSubsystem::PlayAt(this, TEXT("death"), GetActorLocation());
+	}
+	else if (IsBuilding())
+	{
+		UCmdAudioSubsystem::PlayAt(this, TEXT("collapse"), GetActorLocation());
+	}
 
 	if (Killer && Killer != this)
 	{
@@ -425,6 +434,7 @@ void ACmdEntity::FireAt(ACmdEntity* At)
 	}
 	WeaponCooldown = Weapon->Cooldown * FMath::FRandRange(0.95f, 1.05f);
 	const FVector Muzzle = GetMuzzleLocation();
+	UCmdAudioSubsystem::PlayWeapon(this, *Weapon, Muzzle);
 
 	if (Weapon->MuzzleFlash > 0.f)
 	{

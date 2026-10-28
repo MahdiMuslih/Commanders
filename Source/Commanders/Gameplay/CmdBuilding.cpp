@@ -199,7 +199,7 @@ void ACmdBuilding::TickRepair(float DeltaSeconds)
 	if (Team->Credits < Cost)
 	{
 		bRepairing = false;
-		GS->AddMessage(TeamId, TEXT("Insufficient funds for repair."), FLinearColor(1.f, 0.5f, 0.2f));
+		GS->AddMessage(TeamId, TEXT("Insufficient funds for repair."), FLinearColor(1.f, 0.5f, 0.2f), TEXT("deny"));
 		return;
 	}
 	Team->Credits -= Cost;
@@ -241,7 +241,7 @@ void ACmdBuilding::Sell()
 	{
 		const float Refund = Def->Cost * 0.5f * GetHealthPct();
 		GS->AddCredits(TeamId, Refund, false);
-		GS->AddMessage(TeamId, FString::Printf(TEXT("%s sold for $%d."), *Def->Name, FMath::RoundToInt(Refund)));
+		GS->AddMessage(TeamId, FString::Printf(TEXT("%s sold for $%d."), *Def->Name, FMath::RoundToInt(Refund)), FLinearColor(0.9f, 0.9f, 0.6f), TEXT("credits"));
 	}
 	// A couple of crew members walk out of sold structures.
 	const UCmdDataRegistry* Data = UCmdDataRegistry::Get(this);

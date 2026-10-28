@@ -42,6 +42,7 @@ struct FCmdWeaponDef
 	FLinearColor Color = FLinearColor(1.f, 0.8f, 0.3f);
 	float ProjectileScale = 0.08f;
 	float MuzzleFlash = 1.f;
+	FName Sound;			// sound bank id (see Audio/CmdSynth.cpp); derived from the warhead if empty
 };
 
 struct FCmdEntityDef

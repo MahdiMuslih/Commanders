@@ -2,9 +2,9 @@ name: Validate game data
 
 on:
   push:
-    paths: ["Content/Data/**", "Tools/validate_data.py", ".github/workflows/validate-data.yml"]
+    paths: ["Content/Data/**", "Source/Commanders/**", "Tools/validate_data.py", ".github/workflows/validate-data.yml"]
   pull_request:
-    paths: ["Content/Data/**", "Tools/validate_data.py", ".github/workflows/validate-data.yml"]
+    paths: ["Content/Data/**", "Source/Commanders/**", "Tools/validate_data.py", ".github/workflows/validate-data.yml"]
 
 jobs:
   validate:

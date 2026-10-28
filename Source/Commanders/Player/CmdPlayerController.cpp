@@ -1,5 +1,6 @@
 #include "Player/CmdPlayerController.h"
 #include "Player/CmdCameraPawn.h"
+#include "Audio/CmdAudioSubsystem.h"
 #include "UI/CmdHUD.h"
 #include "Game/CmdGameState.h"
 #include "Game/CmdGameMode.h"
@@ -151,6 +152,25 @@ void ACmdPlayerController::SelectEntities(const TArray<ACmdEntity*>& Entities, b
 			Selected.Add(E);
 		}
 	}
+}
+
+void ACmdPlayerController::PlaySelectionSound()
+{
+	const ACmdEntity* First = GetPrimarySelection();
+	if (!First || First->TeamId != GetLocalTeam())
+	{
+		return;
+	}
+	FName Sound = TEXT("select");
+	if (First->IsBuilding())
+	{
+		Sound = TEXT("select_building");
+	}
+	else if (!First->IsInfantry())
+	{
+		Sound = TEXT("select_vehicle");
+	}
+	UCmdAudioSubsystem::Play2D(this, Sound);
 }
 
 bool ACmdPlayerController::HasOwnUnitsSelected() const
@@ -377,6 +397,14 @@ void ACmdPlayerController::HandleHotkeys()
 	if (Pressed(EKeys::R)) SetCursorMode(CursorMode == ECmdCursorMode::Repair ? ECmdCursorMode::Normal : ECmdCursorMode::Repair);
 	if (Pressed(EKeys::O)) HUD->ToggleObjectives();
 	if (Pressed(EKeys::F1)) HUD->ToggleHelp();
+	if (Pressed(EKeys::M))
+	{
+		if (UCmdAudioSubsystem* Audio = UCmdAudioSubsystem::Get(this))
+		{
+			Audio->ToggleMusicMute();
+			GS->AddMessage(GS->LocalTeamId, Audio->IsMusicMuted() ? TEXT("Music off.") : TEXT("Music on."), FLinearColor(0.9f, 0.9f, 0.6f), TEXT("click"));
+		}
+	}
 	if (Pressed(EKeys::H) || Pressed(EKeys::Home))
 	{
 		FocusCameraOn(GS->GetTeamBaseLocation(GS->LocalTeamId));
@@ -436,6 +464,7 @@ void ACmdPlayerController::HandleHotkeys()
 			}
 			LastGroupTime[i] = static_cast<float>(Now);
 			SelectEntities(Members, IsKeyDown(EKeys::LeftShift));
+			PlaySelectionSound();
 		}
 	}
 }
@@ -482,11 +511,12 @@ void ACmdPlayerController::HandleLeftPress()
 	case ECmdCursorMode::Place:
 		if (bPlacementValid && GS->PlaceReadyStructure(Team, PlacementOrigin))
 		{
+			UCmdAudioSubsystem::Play2D(this, TEXT("place"));
 			SetCursorMode(ECmdCursorMode::Normal);
 		}
 		else
 		{
-			GS->AddMessage(Team, TEXT("Cannot build there."), FLinearColor(1.f, 0.4f, 0.3f));
+			GS->AddMessage(Team, TEXT("Cannot build there."), FLinearColor(1.f, 0.4f, 0.3f), TEXT("deny"));
 		}
 		return;
 
@@ -510,6 +540,7 @@ void ACmdPlayerController::HandleLeftPress()
 		if (B && B->TeamId == Team)
 		{
 			B->ToggleRepair();
+			UCmdAudioSubsystem::Play2D(this, TEXT("click"));
 		}
 		if (!IsKeyDown(EKeys::LeftShift))
 		{
@@ -559,6 +590,7 @@ void ACmdPlayerController::HandleLeftRelease()
 		if (bDouble && Picked->TeamId == GetLocalTeam())
 		{
 			SelectSameTypeOnScreen(Picked);
+			PlaySelectionSound();
 			return;
 		}
 		if (bShift && Selected.Contains(Picked))
@@ -568,6 +600,7 @@ void ACmdPlayerController::HandleLeftRelease()
 			return;
 		}
 		SelectEntities({ Picked }, bShift && Picked->TeamId == GetLocalTeam());
+		PlaySelectionSound();
 	}
 	else if (!bShift)
 	{
@@ -602,10 +635,12 @@ void ACmdPlayerController::BoxSelect(const FVector2D& A, const FVector2D& B, boo
 	if (Units.Num() > 0)
 	{
 		SelectEntities(Units, bAdd);
+		PlaySelectionSound();
 	}
 	else if (Buildings.Num() > 0)
 	{
 		SelectEntities({ Buildings[0] }, bAdd);
+		PlaySelectionSound();
 	}
 	else if (!bAdd)
 	{
@@ -661,6 +696,7 @@ void ACmdPlayerController::HandleRightClick()
 		if (B && B->Def && B->Def->Produces.Num() > 0 && GetGroundUnderCursor(Ground))
 		{
 			B->RallyCell = Cmd::WorldToCell(Ground);
+			UCmdAudioSubsystem::Play2D(this, TEXT("click"));
 			ACmdEffect::SpawnFlash(GetWorld(), Ground + FVector(0.f, 0.f, 20.f), FLinearColor(0.3f, 0.6f, 1.f), 0.3f);
 			if (Target == B)
 			{
@@ -704,6 +740,7 @@ void ACmdPlayerController::HandleRightClick()
 		}
 		if (bAnyHarvester)
 		{
+			UCmdAudioSubsystem::Play2D(this, TEXT("ack"));
 			ACmdEffect::SpawnFlash(GetWorld(), Ground + FVector(0.f, 0.f, 20.f), FLinearColor(1.f, 0.8f, 0.2f), 0.3f);
 			return;
 		}
@@ -751,6 +788,7 @@ void ACmdPlayerController::IssueTargetCommand(ACmdEntity* Target, bool bForce)
 	}
 	if (bAny)
 	{
+		UCmdAudioSubsystem::Play2D(this, bAttack ? TEXT("ack_attack") : TEXT("ack"));
 		ACmdEffect::SpawnFlash(GetWorld(), Target->GetActorLocation() + FVector(0.f, 0.f, 30.f), bAttack ? FLinearColor(1.f, 0.15f, 0.1f) : FLinearColor(0.2f, 1.f, 0.3f), 0.35f);
 	}
 }
@@ -794,6 +832,7 @@ void ACmdPlayerController::IssueMove(const FIntPoint& Cell, bool bAttackMove)
 		Used.Add(Target);
 		U->OrderMove(Target, bAttackMove);
 	}
+	UCmdAudioSubsystem::Play2D(this, bAttackMove ? TEXT("ack_attack") : TEXT("ack"));
 	ACmdEffect::SpawnFlash(GetWorld(), Dest + FVector(0.f, 0.f, 20.f), bAttackMove ? FLinearColor(1.f, 0.5f, 0.1f) : FLinearColor(0.2f, 1.f, 0.3f), 0.3f);
 }
 

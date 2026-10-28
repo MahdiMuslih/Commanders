@@ -5,7 +5,7 @@ A classic base-building real-time strategy game in the spirit of the 1990s *Comm
 > Winter, 1958. The Iron Pact crosses the Varn River without warning, and unnatural storms follow its armies.
 > Fight for the **Western Concord** to stop the "Iron Winter", or march with the **Iron Pact** and find out what your Premier is truly willing to sacrifice.
 
-The whole game is **code- and data-driven**. Every unit, building, explosion, menu, map, mission, line of dialogue and cutscene comes from C++ and plain JSON. The repository contains **no binary assets** (`.uasset`/`.umap`), so it opens and plays on a clean engine install. Units are assembled from engine primitives in a "toy soldier" style. You can swap in real art later without touching code (see [Replacing the art](#replacing-the-art)).
+The whole game is **code- and data-driven**. Every unit, building, explosion, sound effect, piece of music, menu, map, mission, line of dialogue and cutscene comes from C++ and plain JSON. The repository contains **no binary assets** (`.uasset`/`.umap`), so it opens and plays on a clean engine install. Units are assembled from engine primitives in a "toy soldier" style. You can swap in real art later without touching code (see [Replacing the art](#replacing-the-art)).
 
 ---
 
@@ -27,6 +27,7 @@ The whole game is **code- and data-driven**. Every unit, building, explosion, me
 | **Campaign** | 12 story missions (6 per side) with briefings, objectives, triggers, scripted waves, reinforcements, radio dialogue, timers, and intro/outro cinematics. Progress is saved. |
 | **Cinematics** | Real-time cutscenes defined in JSON: dolly and orbit camera shots, letterbox, fades, title cards, subtitles, camera shake, and timeline events that drive live gameplay (spawns, orders, explosions, lighting changes). |
 | **Skirmish** | Procedural maps: 1–3 AI opponents, 3 difficulties, 3 map sizes, 4 theatres (temperate, winter, desert, dusk) and a choice of starting credits. |
+| **Audio** | About 40 synthesised effects (gunfire, cannons, rockets, flame, arc bolts, explosions, collapses, UI and announcer chimes) with camera-relative panning. A live procedural soundtrack follows the game: a brooding menu theme, briefing tension, and an industrial battle march whose drums and lead grow with nearby combat, plus victory and defeat stings. Volume controls are in the menus; `M` mutes the music. Any sound or music mood can be swapped for real assets via `Audio.json`. |
 | **Front end** | Main menu over a live AI-vs-AI battle, campaign and mission select, skirmish setup, how-to-play, briefing screen with a recon map, pause menu, results with stats, and campaign epilogues. |
 
 ---
@@ -66,6 +67,7 @@ No level setup is needed. `GameDefaultMap` points at the engine's empty `/Engine
 | `H` | Jump to your base |
 | `X` / `R` | Sell / Repair mode |
 | `O` / `F1` / `Esc` | Objectives / Help overlay / Pause |
+| `M` | Mute / unmute music |
 | Sidebar | Left = build / place when READY, right = hold, then cancel. Shift-click queues 5. |
 | Production building + right click on ground | Set rally point (right-click the building itself to make it primary) |
 | `Space` / `Esc` during cutscenes | Skip |
@@ -85,6 +87,7 @@ Content/Data/               ALL game content as JSON
   Entities.json             units & structures: stats, tech tree, procedural 3D models
   Campaigns.json            the two campaigns, synopsis/epilogue, mission order
   Cinematics.json           shared cinematics
+  Audio.json                mix levels and optional real-audio overrides
   Missions/*.json           12 story missions (map, teams, entities, objectives, triggers, cinematics)
 Source/Commanders/
   Core/       CmdTypes (enums, damage table, grid<->world), CmdJson (JSON helpers)
@@ -100,11 +103,14 @@ Source/Commanders/
               cinematic director
   AI/         UCmdAICommander
   Player/     RTS camera pawn, player controller (selection, commands, placement)
+  Audio/      procedural sound bank, live music engine, software mixer
+              (USynthComponent), audio subsystem and per-level audio actor
   UI/         ACmdHUD - menus, briefing, sidebar, minimap, overlays, results
 Docs/
   Story.md        world, characters and the full campaign storyline
   DesignDoc.md    factions, units, economy and balance reference
   Scripting.md    mission/cinematic JSON reference for designers
+  Audio.md        how the procedural audio works, sound ids, overrides
 Tools/validate_data.py      validates all data without launching Unreal
 ```
 
@@ -122,7 +128,7 @@ Tools/validate_data.py      validates all data without launching Unreal
 ### Replacing the art
 Every model part has a `shape`, which can be a basic primitive or any static mesh path such as `"/Game/Art/Tanks/SM_Bear.SM_Bear"`. Replace a unit's `parts` with a single real mesh (marking the turret mesh `"turret": true`) and the procedural model is gone. Tinting uses the `Color` parameter of `/Engine/BasicShapes/BasicShapeMaterial`. Give your own material a `Color` vector parameter for team colours, or change `UCmdVisualSubsystem::GetColorMaterial`.
 
-Audio is not included. The natural hook points are `ACmdGameState::AddMessage` (announcer lines), `ACmdEntity::FireAt` / `ACmdEffect::SpawnExplosion` (SFX), and the mission director's dialogue queue (voice-over).
+Real audio works the same way. `Content/Data/Audio.json` maps any sound id or music mood to an imported asset, which replaces the synthesised version. See **[Docs/Audio.md](Docs/Audio.md)**. Voice-over for the radio dialogue is not included.
 
 ---
 

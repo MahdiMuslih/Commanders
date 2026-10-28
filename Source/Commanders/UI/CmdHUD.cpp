@@ -13,6 +13,7 @@
 #include "World/CmdGridSubsystem.h"
 #include "World/CmdTerrainActor.h"
 #include "Data/CmdDataRegistry.h"
+#include "Audio/CmdAudioSubsystem.h"
 #include "Camera/PlayerCameraManager.h"
 #include "Engine/Canvas.h"
 #include "Engine/Engine.h"
@@ -377,8 +378,17 @@ bool ACmdHUD::HandleClick(const FVector2D& Pos, bool bRight)
 		{
 			if (B.bEnabled)
 			{
+				// Build buttons get their own announcer sounds from the production queue.
+				if (B.Action != TEXT("build"))
+				{
+					UCmdAudioSubsystem::Play2D(this, TEXT("click"));
+				}
 				const FButton Copy = B;	// Execute may rebuild state
 				Execute(Copy, bRight);
+			}
+			else
+			{
+				UCmdAudioSubsystem::Play2D(this, TEXT("deny"));
 			}
 			return true;
 		}
@@ -547,6 +557,24 @@ void ACmdHUD::Execute(const FButton& B, bool bRight)
 		SkirmishDraft.Seed = 0;
 		GI->StartSkirmish(SkirmishDraft);
 	}
+	else if (A == TEXT("vol_music") || A == TEXT("vol_sfx"))
+	{
+		if (UCmdAudioSubsystem* Audio = UCmdAudioSubsystem::Get(this))
+		{
+			if (A == TEXT("vol_music"))
+			{
+				if (Audio->IsMusicMuted())
+				{
+					Audio->ToggleMusicMute();
+				}
+				Audio->SetMusicVolume(FMath::RoundToFloat((Audio->GetMusicVolume() + 0.1f * B.Int) * 10.f) / 10.f);
+			}
+			else
+			{
+				Audio->SetSfxVolume(FMath::RoundToFloat((Audio->GetSfxVolume() + 0.1f * B.Int) * 10.f) / 10.f);
+			}
+		}
+	}
 	else if (A == TEXT("quit"))
 	{
 		UKismetSystemLibrary::QuitGame(this, PC, EQuitPreference::Quit, false);
@@ -615,6 +643,7 @@ void ACmdHUD::Execute(const FButton& B, bool bRight)
 			if (GS->GetReadyStructure(Team) == Def->Id)
 			{
 				PC->BeginPlacement(Def->Id);
+				UCmdAudioSubsystem::Play2D(this, TEXT("click"));
 			}
 			else
 			{
@@ -719,6 +748,13 @@ void ACmdHUD::DrawMainMenu()
 				GI->Save->CompletedMissions.Num(), GI->Save->SkirmishWins, GI->Save->SkirmishLosses);
 			Text(Record, X, H - 80.f * S(), ColDim, 0.8f, SmallFont());
 		}
+	}
+	{
+		const float AW = 340.f * S();
+		const float AX = Canvas->ClipX - AW - 40.f * S();
+		const float AY = H - 130.f * S();
+		Panel(AX - 16.f * S(), AY - 14.f * S(), AW + 32.f * S(), 110.f * S(), FLinearColor(0.f, 0.f, 0.f, 0.6f), ColBorder, 1.f);
+		DrawAudioSettings(AX, AY, AW);
 	}
 	Text(TEXT("v1.0  |  Built entirely in Unreal Engine C++ - no imported assets"), X, H - 50.f * S(), ColDim, 0.75f, SmallFont());
 }
@@ -881,6 +917,7 @@ void ACmdHUD::DrawHowToPlay()
 		{ TEXT("H"), TEXT("Jump to your base") },
 		{ TEXT("X / R"), TEXT("Sell / Repair mode") },
 		{ TEXT("O / F1 / Esc"), TEXT("Objectives / Help / Pause") },
+		{ TEXT("M"), TEXT("Mute / unmute the music") },
 	};
 	const TArray<FString> Tips = {
 		TEXT("Deploy your MCV to create a Construction Yard, then build Power Plants before anything else."),
@@ -1150,13 +1187,42 @@ void ACmdHUD::DrawResult()
 	}
 }
 
+void ACmdHUD::DrawAudioSettings(float X, float Y, float W)
+{
+	const UCmdAudioSubsystem* Audio = UCmdAudioSubsystem::Get(this);
+	if (!Audio)
+	{
+		return;
+	}
+	struct FAudioRow
+	{
+		const TCHAR* Label;
+		float Value;
+		FName Action;
+	};
+	const FAudioRow Rows[2] = {
+		{ TEXT("MUSIC"), Audio->IsMusicMuted() ? 0.f : Audio->GetMusicVolume(), TEXT("vol_music") },
+		{ TEXT("EFFECTS"), Audio->GetSfxVolume(), TEXT("vol_sfx") },
+	};
+	const float RowH = 40.f * S();
+	const float BS = 34.f * S();
+	for (const FAudioRow& Row : Rows)
+	{
+		Text(Row.Label, X, Y + 6.f * S(), ColDim, 0.8f, SmallFont());
+		Button(TEXT("-"), X + W - BS * 2.f - 90.f * S(), Y, BS, BS, Row.Action, NAME_None, -1, Row.Value > 0.001f, false, 0.9f);
+		Text(FString::Printf(TEXT("%d%%"), FMath::RoundToInt(Row.Value * 100.f)), X + W - BS - 45.f * S(), Y + 6.f * S(), ColText, 0.8f, SmallFont(), true);
+		Button(TEXT("+"), X + W - BS, Y, BS, BS, Row.Action, NAME_None, 1, Row.Value < 0.999f, false, 0.9f);
+		Y += RowH;
+	}
+}
+
 void ACmdHUD::DrawPauseMenu()
 {
 	const float W = Canvas->ClipX;
 	const float H = Canvas->ClipY;
 	DrawRect(FLinearColor(0.f, 0.f, 0.f, 0.65f), 0.f, 0.f, W, H);
 	const float PW = 460.f * S();
-	const float PH = 470.f * S();
+	const float PH = 570.f * S();
 	const float PX = (W - PW) * 0.5f;
 	const float PY = (H - PH) * 0.5f;
 	Panel(PX, PY, PW, PH, ColPanel, ColBorder, 2.f * S());
@@ -1178,7 +1244,8 @@ void ACmdHUD::DrawPauseMenu()
 	Button(TEXT("RESUME"), BX, Y, BW, BH, TEXT("resume"), NAME_None, 0, true, true); Y += BH + 16.f * S();
 	Button(TEXT("RESTART"), BX, Y, BW, BH, TEXT("restart")); Y += BH + 16.f * S();
 	Button(bShowHelp ? TEXT("HIDE CONTROLS") : TEXT("SHOW CONTROLS"), BX, Y, BW, BH, TEXT("help")); Y += BH + 16.f * S();
-	Button(TEXT("ABANDON MISSION"), BX, Y, BW, BH, TEXT("abandon"));
+	Button(TEXT("ABANDON MISSION"), BX, Y, BW, BH, TEXT("abandon")); Y += BH + 22.f * S();
+	DrawAudioSettings(BX, Y, BW);
 }
 
 // ===========================================================================
@@ -1977,7 +2044,7 @@ void ACmdHUD::DrawHelpOverlay()
 		TEXT("A attack-move   S stop   G guard   D deploy"),
 		TEXT("Ctrl+RMB force fire   Ctrl+A all units"),
 		TEXT("Ctrl+# set group   # recall (x2 = focus)"),
-		TEXT("X sell   R repair   H home   O objectives"),
+		TEXT("X sell   R repair   H home   O objectives   M music"),
 		TEXT("Arrows / edge scroll   Wheel zoom   Q/E rotate"),
 		TEXT("Sidebar: LMB build, RMB hold/cancel, Shift = x5"),
 	};

@@ -80,6 +80,7 @@ private:
 	void DrawBriefing();
 	void DrawResult();
 	void DrawPauseMenu();
+	void DrawAudioSettings(float X, float Y, float W);
 	void DrawCinematic();
 
 	// Gameplay -------------------------------------------------------------------
