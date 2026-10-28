@@ -32,4 +32,10 @@ public:
 
 	UPROPERTY()
 	float SfxVolume = 0.85f;
+
+	UPROPERTY()
+	FString PlayerName;
+
+	UPROPERTY()
+	FString LastJoinAddress = TEXT("127.0.0.1");
 };

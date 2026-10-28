@@ -79,7 +79,7 @@ void ACmdAudioActor::Tick(float DeltaSeconds)
 	Audio->DecayCombat(RealDelta);
 
 	const ACmdGameState* GS = GetWorld()->GetGameState<ACmdGameState>();
-	const ECmdFlowState Flow = GS ? GS->Flow : ECmdFlowState::None;
+	const ECmdFlowState Flow = GS ? GS->GetDisplayFlow() : ECmdFlowState::None;
 	if (Flow != LastFlow)
 	{
 		if (Flow == ECmdFlowState::Victory)

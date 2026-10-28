@@ -43,6 +43,9 @@ public:
 	void ToggleObjectives() { bShowObjectives = !bShowObjectives; }
 	void ToggleHelp() { bShowHelp = !bShowHelp; }
 
+	/** A text field typed into via the player controller was confirmed. */
+	void OnTextCommitted(FName Field, const FString& Value);
+
 private:
 	struct FButton
 	{
@@ -82,6 +85,15 @@ private:
 	void DrawPauseMenu();
 	void DrawAudioSettings(float X, float Y, float W);
 	void DrawCinematic();
+
+	// Multiplayer ---------------------------------------------------------------
+	void DrawMultiplayerMenu();
+	void DrawLobby();
+	void DrawChatLine();
+	void DrawSpectatorBanner();
+	void TextField(FName Field, const FString& Value, float X, float Y, float W, float H, const FString& Placeholder);
+	void SendLobbyChoice(FName Faction, int32 Alliance, bool bReady);
+	void ShowLobbyError(const FString& Error);
 
 	// Gameplay -------------------------------------------------------------------
 	void DrawGameplay();
@@ -133,4 +145,8 @@ private:
 	uint32 MinimapRevision = 0;
 	float MinimapTimer = 0.f;
 	bool bMinimapShroud = true;
+
+	FString JoinAddress;
+	FString LobbyError;
+	float LobbyErrorTime = -100.f;
 };

@@ -31,6 +31,7 @@ void UCmdGridSubsystem::InitGrid(int32 InWidth, int32 InHeight)
 	Cells.SetNum(Width * Height);
 	OreCapacity.Reset();
 	OreCapacity.SetNumZeroed(Width * Height);
+	DirtyOre.Reset();
 	++Revision;
 }
 
@@ -95,7 +96,9 @@ void UCmdGridSubsystem::AddOreField(const FIntPoint& Center, float Radius, int32
 			// Denser in the middle, ragged at the edge.
 			const float Falloff = 1.f - (D / (Radius + 0.5f));
 			const int32 Amount = FMath::Max(1, FMath::RoundToInt(Richness * (0.35f + 0.65f * Falloff)));
-			if (D > Radius - 1.f && FMath::FRand() < 0.35f)
+			// Deterministic raggedness (hash of the cell) so every networked machine generates the same field.
+			const uint32 Hash = HashCombine(GetTypeHash(C.X * 7919), GetTypeHash(C.Y * 104729 + 17));
+			if (D > Radius - 1.f && (Hash % 100u) < 35u)
 			{
 				continue;
 			}
@@ -447,6 +450,7 @@ int32 UCmdGridSubsystem::HarvestOre(const FIntPoint& C, int32 Bales)
 	}
 	const int32 Taken = FMath::Min(Cell->Ore, Bales);
 	Cell->Ore -= Taken;
+	MarkOreDirty(ToIndex(C));
 	++Revision;
 	if (ACmdTerrainActor* T = TerrainActor.Get())
 	{
@@ -473,6 +477,7 @@ void UCmdGridSubsystem::GrowOre()
 		if (OreCapacity[Index] > 0 && Cell.Ore < OreCapacity[Index] && Cell.Building == nullptr)
 		{
 			Cell.Ore = FMath::Min(OreCapacity[Index], Cell.Ore + 1);
+			MarkOreDirty(Index);
 			if (ACmdTerrainActor* T = TerrainActor.Get())
 			{
 				T->OnOreChanged(FromIndex(Index));
@@ -480,6 +485,44 @@ void UCmdGridSubsystem::GrowOre()
 		}
 	}
 	++Revision;
+}
+
+void UCmdGridSubsystem::MarkOreDirty(int32 Index)
+{
+	if (bTrackOreChanges)
+	{
+		DirtyOre.Add(Index);
+	}
+}
+
+void UCmdGridSubsystem::ConsumeOreChanges(TArray<FCmdOreDelta>& OutChanges)
+{
+	OutChanges.Reset(DirtyOre.Num());
+	for (const int32 Index : DirtyOre)
+	{
+		if (Cells.IsValidIndex(Index))
+		{
+			FCmdOreDelta Delta;
+			Delta.Index = Index;
+			Delta.Amount = static_cast<uint8>(FMath::Clamp(Cells[Index].Ore, 0, 255));
+			OutChanges.Add(Delta);
+		}
+	}
+	DirtyOre.Reset();
+}
+
+void UCmdGridSubsystem::ApplyOreDelta(int32 Index, int32 Amount)
+{
+	if (!Cells.IsValidIndex(Index) || Cells[Index].Ore == Amount)
+	{
+		return;
+	}
+	Cells[Index].Ore = Amount;
+	++Revision;
+	if (ACmdTerrainActor* T = TerrainActor.Get())
+	{
+		T->OnOreChanged(FromIndex(Index));
+	}
 }
 
 void UCmdGridSubsystem::RevealCircle(int32 Alliance, const FVector& WorldCenter, float RadiusCells)

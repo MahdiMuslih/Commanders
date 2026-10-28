@@ -4,6 +4,8 @@
 #include "UI/CmdHUD.h"
 #include "Game/CmdGameState.h"
 #include "Game/CmdGameMode.h"
+#include "Game/CmdPlayerState.h"
+#include "Gameplay/CmdCommands.h"
 #include "Gameplay/CmdEntity.h"
 #include "Gameplay/CmdUnit.h"
 #include "Gameplay/CmdBuilding.h"
@@ -57,6 +59,185 @@ int32 ACmdPlayerController::GetLocalTeam() const
 {
 	const ACmdGameState* GS = GetCmdGameState();
 	return GS ? GS->LocalTeamId : INDEX_NONE;
+}
+
+int32 ACmdPlayerController::GetCommandTeam() const
+{
+	if (const ACmdPlayerState* PS = GetPlayerState<ACmdPlayerState>())
+	{
+		if (PS->SlotTeam != INDEX_NONE)
+		{
+			return PS->SlotTeam;
+		}
+	}
+	// Single player: the one local controller commands the local team.
+	return IsLocalController() && GetNetMode() == NM_Standalone ? GetLocalTeam() : INDEX_NONE;
+}
+
+bool ACmdPlayerController::IsSpectating() const
+{
+	const ACmdGameState* GS = GetCmdGameState();
+	const FCmdTeam* Team = GS ? GS->GetTeam(GS->LocalTeamId) : nullptr;
+	return GS && GS->IsNetworked() && Team && Team->bDefeated;
+}
+
+// ---------------------------------------------------------------------------
+// Networking
+// ---------------------------------------------------------------------------
+
+void ACmdPlayerController::SendCommand(const FCmdCommand& Command)
+{
+	if (HasAuthority())
+	{
+		CmdCommands::Execute(GetWorld(), GetCommandTeam(), Command);
+	}
+	else
+	{
+		ServerCommand(Command);
+	}
+}
+
+void ACmdPlayerController::ServerCommand_Implementation(const FCmdCommand& Command)
+{
+	const int32 Team = GetCommandTeam();
+	if (Team != INDEX_NONE)
+	{
+		CmdCommands::Execute(GetWorld(), Team, Command);
+	}
+}
+
+void ACmdPlayerController::ClientShowMessage_Implementation(const FString& Text, FLinearColor Color, FName Sound)
+{
+	if (ACmdGameState* GS = GetCmdGameState())
+	{
+		GS->ShowMessageLocal(Text, Color, Sound);
+	}
+}
+
+void ACmdPlayerController::ServerSetLobbyChoice_Implementation(FName Faction, int32 Alliance, bool bReady)
+{
+	ACmdPlayerState* PS = GetPlayerState<ACmdPlayerState>();
+	const ACmdGameState* GS = GetCmdGameState();
+	if (!PS || !GS || GS->Flow != ECmdFlowState::Lobby)
+	{
+		return;
+	}
+	PS->Faction = Faction == TEXT("pact") ? FName(TEXT("pact")) : FName(TEXT("concord"));
+	PS->Alliance = FMath::Clamp(Alliance, 0, CmdConst::MaxPlayers - 1);
+	PS->bReady = bReady;
+}
+
+void ACmdPlayerController::ServerChat_Implementation(const FString& Text)
+{
+	const FString Clean = Text.TrimStartAndEnd().Left(120);
+	ACmdGameState* GS = GetCmdGameState();
+	if (Clean.IsEmpty() || !GS || !PlayerState)
+	{
+		return;
+	}
+	GS->AddMessage(INDEX_NONE, FString::Printf(TEXT("%s: %s"), *PlayerState->GetPlayerName(), *Clean), FLinearColor(0.75f, 0.9f, 1.f), TEXT("message"));
+}
+
+// ---------------------------------------------------------------------------
+// Text entry: polled keys, enough for names, addresses and chat
+// ---------------------------------------------------------------------------
+
+void ACmdPlayerController::BeginTextEntry(FName Field, const FString& Initial, int32 MaxLength)
+{
+	TextField = Field;
+	TextBuffer = Initial;
+	TextMaxLength = FMath::Max(1, MaxLength);
+}
+
+void ACmdPlayerController::EndTextEntry(bool bCommit)
+{
+	if (TextField.IsNone())
+	{
+		return;
+	}
+	const FName Field = TextField;
+	const FString Text = TextBuffer;
+	TextField = NAME_None;
+	TextBuffer.Reset();
+	if (!bCommit)
+	{
+		return;
+	}
+	if (Field == TEXT("chat"))
+	{
+		if (!Text.TrimStartAndEnd().IsEmpty())
+		{
+			ServerChat(Text);
+		}
+		return;
+	}
+	if (ACmdHUD* HUD = GetCmdHUD())
+	{
+		HUD->OnTextCommitted(Field, Text);
+	}
+}
+
+void ACmdPlayerController::HandleTextEntry()
+{
+	if (Pressed(EKeys::Enter))
+	{
+		EndTextEntry(true);
+		return;
+	}
+	if (Pressed(EKeys::Escape))
+	{
+		EndTextEntry(false);
+		return;
+	}
+	if (Pressed(EKeys::BackSpace) && TextBuffer.Len() > 0)
+	{
+		TextBuffer.LeftChopInline(1);
+	}
+	const bool bShift = IsKeyDown(EKeys::LeftShift) || IsKeyDown(EKeys::RightShift);
+	auto AddChar = [this](TCHAR C)
+	{
+		if (TextBuffer.Len() < TextMaxLength)
+		{
+			TextBuffer.AppendChar(C);
+		}
+	};
+
+	static const FKey Letters[26] = { EKeys::A, EKeys::B, EKeys::C, EKeys::D, EKeys::E, EKeys::F, EKeys::G, EKeys::H, EKeys::I, EKeys::J, EKeys::K, EKeys::L, EKeys::M,
+		EKeys::N, EKeys::O, EKeys::P, EKeys::Q, EKeys::R, EKeys::S, EKeys::T, EKeys::U, EKeys::V, EKeys::W, EKeys::X, EKeys::Y, EKeys::Z };
+	for (int32 i = 0; i < 26; ++i)
+	{
+		if (Pressed(Letters[i]))
+		{
+			AddChar(static_cast<TCHAR>((bShift ? 'A' : 'a') + i));
+		}
+	}
+	static const FKey Digits[10] = { EKeys::Zero, EKeys::One, EKeys::Two, EKeys::Three, EKeys::Four, EKeys::Five, EKeys::Six, EKeys::Seven, EKeys::Eight, EKeys::Nine };
+	static const FKey PadDigits[10] = { EKeys::NumPadZero, EKeys::NumPadOne, EKeys::NumPadTwo, EKeys::NumPadThree, EKeys::NumPadFour, EKeys::NumPadFive, EKeys::NumPadSix, EKeys::NumPadSeven, EKeys::NumPadEight, EKeys::NumPadNine };
+	for (int32 i = 0; i < 10; ++i)
+	{
+		if (Pressed(Digits[i]))
+		{
+			if (!bShift)
+			{
+				AddChar(static_cast<TCHAR>('0' + i));
+			}
+			else if (i == 1)
+			{
+				AddChar(TEXT('!'));
+			}
+		}
+		if (Pressed(PadDigits[i]))
+		{
+			AddChar(static_cast<TCHAR>('0' + i));
+		}
+	}
+	if (Pressed(EKeys::SpaceBar)) AddChar(TEXT(' '));
+	if (Pressed(EKeys::Period) || Pressed(EKeys::Decimal)) AddChar(TEXT('.'));
+	if (Pressed(EKeys::Comma)) AddChar(TEXT(','));
+	if (Pressed(EKeys::Hyphen) || Pressed(EKeys::Subtract)) AddChar(bShift ? TEXT('_') : TEXT('-'));
+	if (Pressed(EKeys::Semicolon)) AddChar(bShift ? TEXT(':') : TEXT(';'));
+	if (Pressed(EKeys::Slash)) AddChar(bShift ? TEXT('?') : TEXT('/'));
+	if (Pressed(EKeys::Apostrophe)) AddChar(TEXT('\''));
 }
 
 void ACmdPlayerController::OnSessionBuilt(const FVector& CameraStart, bool bIsMenu)
@@ -288,6 +469,24 @@ void ACmdPlayerController::PlayerTick(float DeltaTime)
 	}
 	CleanSelection();
 
+	// Typing swallows the keyboard; a click elsewhere commits the field.
+	if (IsTextEntryActive())
+	{
+		HandleTextEntry();
+		if (Pressed(EKeys::LeftMouseButton) && TextField != TEXT("chat"))
+		{
+			EndTextEntry(true);
+		}
+		else
+		{
+			if (GS->Flow == ECmdFlowState::Playing && !HUD->IsModalOpen())
+			{
+				HandleCamera(DeltaTime);
+			}
+			return;
+		}
+	}
+
 	// Cinematics: only allow skipping.
 	if (GS->Flow == ECmdFlowState::Cinematic)
 	{
@@ -323,6 +522,25 @@ void ACmdPlayerController::PlayerTick(float DeltaTime)
 	}
 
 	HandleCamera(DeltaTime);
+	if (GS->IsNetworked() && Pressed(EKeys::Enter))
+	{
+		BeginTextEntry(TEXT("chat"), FString(), 120);
+		return;
+	}
+	if (IsSpectating())
+	{
+		// Eliminated: free camera over the whole map, no orders.
+		DestroyGhost();
+		if (Pressed(EKeys::Escape))
+		{
+			HUD->OpenPauseMenu();
+		}
+		if (Pressed(EKeys::LeftMouseButton))
+		{
+			HUD->HandleClick(MousePos, false);
+		}
+		return;
+	}
 	HandleHotkeys();
 	HandleGameplayInput();
 	UpdateHover();
@@ -402,7 +620,7 @@ void ACmdPlayerController::HandleHotkeys()
 		if (UCmdAudioSubsystem* Audio = UCmdAudioSubsystem::Get(this))
 		{
 			Audio->ToggleMusicMute();
-			GS->AddMessage(GS->LocalTeamId, Audio->IsMusicMuted() ? TEXT("Music off.") : TEXT("Music on."), FLinearColor(0.9f, 0.9f, 0.6f), TEXT("click"));
+			GS->ShowMessageLocal(Audio->IsMusicMuted() ? TEXT("Music off.") : TEXT("Music on."), FLinearColor(0.9f, 0.9f, 0.6f), TEXT("click"));
 		}
 	}
 	if (Pressed(EKeys::H) || Pressed(EKeys::Home))
@@ -441,7 +659,7 @@ void ACmdPlayerController::HandleHotkeys()
 					Groups[i].Add(E);
 				}
 			}
-			GS->AddMessage(GS->LocalTeamId, FString::Printf(TEXT("Group %d assigned."), i));
+			GS->ShowMessageLocal(FString::Printf(TEXT("Group %d assigned."), i), FLinearColor(0.9f, 0.9f, 0.6f), TEXT("message"));
 		}
 		else
 		{
@@ -509,14 +727,18 @@ void ACmdPlayerController::HandleLeftPress()
 	switch (CursorMode)
 	{
 	case ECmdCursorMode::Place:
-		if (bPlacementValid && GS->PlaceReadyStructure(Team, PlacementOrigin))
+		if (bPlacementValid)
 		{
+			FCmdCommand Command;
+			Command.Type = ECmdCommandType::Place;
+			Command.Cell = PlacementOrigin;
+			SendCommand(Command);
 			UCmdAudioSubsystem::Play2D(this, TEXT("place"));
 			SetCursorMode(ECmdCursorMode::Normal);
 		}
 		else
 		{
-			GS->AddMessage(Team, TEXT("Cannot build there."), FLinearColor(1.f, 0.4f, 0.3f), TEXT("deny"));
+			GS->ShowMessageLocal(TEXT("Cannot build there."), FLinearColor(1.f, 0.4f, 0.3f), TEXT("deny"));
 		}
 		return;
 
@@ -525,7 +747,10 @@ void ACmdPlayerController::HandleLeftPress()
 		ACmdBuilding* B = Cast<ACmdBuilding>(PickEntityAt(MousePos));
 		if (B && B->TeamId == Team)
 		{
-			B->Sell();
+			FCmdCommand Command;
+			Command.Type = ECmdCommandType::Sell;
+			Command.Target = B;
+			SendCommand(Command);
 		}
 		if (!IsKeyDown(EKeys::LeftShift))
 		{
@@ -539,7 +764,10 @@ void ACmdPlayerController::HandleLeftPress()
 		ACmdBuilding* B = Cast<ACmdBuilding>(PickEntityAt(MousePos));
 		if (B && B->TeamId == Team)
 		{
-			B->ToggleRepair();
+			FCmdCommand Command;
+			Command.Type = ECmdCommandType::Repair;
+			Command.Target = B;
+			SendCommand(Command);
 			UCmdAudioSubsystem::Play2D(this, TEXT("click"));
 		}
 		if (!IsKeyDown(EKeys::LeftShift))
@@ -695,13 +923,13 @@ void ACmdPlayerController::HandleRightClick()
 		FVector Ground;
 		if (B && B->Def && B->Def->Produces.Num() > 0 && GetGroundUnderCursor(Ground))
 		{
-			B->RallyCell = Cmd::WorldToCell(Ground);
+			FCmdCommand Command;
+			Command.Type = Target == B ? ECmdCommandType::Primary : ECmdCommandType::Rally;
+			Command.Target = B;
+			Command.Cell = Cmd::WorldToCell(Ground);
+			SendCommand(Command);
 			UCmdAudioSubsystem::Play2D(this, TEXT("click"));
-			ACmdEffect::SpawnFlash(GetWorld(), Ground + FVector(0.f, 0.f, 20.f), FLinearColor(0.3f, 0.6f, 1.f), 0.3f);
-			if (Target == B)
-			{
-				GS->SetPrimary(B);
-			}
+			ACmdEffect::SpawnFlashLocal(GetWorld(), Ground + FVector(0.f, 0.f, 20.f), FLinearColor(0.3f, 0.6f, 1.f), 0.3f);
 		}
 		return;
 	}
@@ -731,153 +959,99 @@ void ACmdPlayerController::HandleRightClick()
 		bool bAnyHarvester = false;
 		for (ACmdEntity* E : Sel)
 		{
-			ACmdUnit* U = Cast<ACmdUnit>(E);
-			if (U && U->IsHarvester())
-			{
-				U->OrderHarvest(&Cell);
-				bAnyHarvester = true;
-			}
+			const ACmdUnit* U = Cast<ACmdUnit>(E);
+			bAnyHarvester |= U && U->IsHarvester();
 		}
 		if (bAnyHarvester)
 		{
+			FCmdCommand Command = MakeUnitCommand(ECmdCommandType::Harvest);
+			Command.Cell = Cell;
+			SendCommand(Command);
 			UCmdAudioSubsystem::Play2D(this, TEXT("ack"));
-			ACmdEffect::SpawnFlash(GetWorld(), Ground + FVector(0.f, 0.f, 20.f), FLinearColor(1.f, 0.8f, 0.2f), 0.3f);
+			ACmdEffect::SpawnFlashLocal(GetWorld(), Ground + FVector(0.f, 0.f, 20.f), FLinearColor(1.f, 0.8f, 0.2f), 0.3f);
 			return;
 		}
 	}
 	IssueMove(Cell, false);
 }
 
+FCmdCommand ACmdPlayerController::MakeUnitCommand(ECmdCommandType Type) const
+{
+	FCmdCommand Command;
+	Command.Type = Type;
+	const int32 Team = GetLocalTeam();
+	for (ACmdEntity* E : GetSelection())
+	{
+		if (E->TeamId == Team && !E->IsBuilding())
+		{
+			Command.Units.Add(E);
+		}
+	}
+	return Command;
+}
+
 void ACmdPlayerController::IssueTargetCommand(ACmdEntity* Target, bool bForce)
 {
 	ACmdGameState* GS = GetCmdGameState();
-	const bool bHostile = GS->AreHostile(GS->LocalTeamId, Target->TeamId);
-	ACmdBuilding* TargetBuilding = Cast<ACmdBuilding>(Target);
-	bool bAny = false;
-	bool bAttack = false;
+	FCmdCommand Command = MakeUnitCommand(bForce ? ECmdCommandType::ForceTarget : ECmdCommandType::Target);
+	Command.Target = Target;
+	if (Command.Units.Num() == 0)
+	{
+		return;
+	}
+	SendCommand(Command);
 
-	for (ACmdEntity* E : GetSelection())
+	// Feedback mirrors what the server will decide.
+	const bool bHostile = GS->AreHostile(GS->LocalTeamId, Target->TeamId);
+	bool bAttack = false;
+	for (ACmdEntity* E : Command.Units)
 	{
-		ACmdUnit* U = Cast<ACmdUnit>(E);
-		if (!U || U->TeamId != GS->LocalTeamId)
-		{
-			continue;
-		}
-		if (U->IsEngineer() && TargetBuilding && (TargetBuilding->Def->bCapturable || TargetBuilding->TeamId == U->TeamId))
-		{
-			U->OrderCapture(TargetBuilding);
-			bAny = true;
-		}
-		else if (U->IsHarvester() && TargetBuilding && TargetBuilding->TeamId == U->TeamId && TargetBuilding->Def->bRefinery)
-		{
-			U->OrderDock(TargetBuilding);
-			bAny = true;
-		}
-		else if ((bHostile || bForce) && U->HasWeapon() && U->CanTarget(Target))
-		{
-			U->OrderAttack(Target);
-			bAny = true;
-			bAttack = true;
-		}
-		else
-		{
-			const FIntPoint Cell = TargetBuilding ? TargetBuilding->GetNearestAdjacentCell(U->GetCell()) : Target->GetCell();
-			U->OrderMove(Cell, false);
-			bAny = true;
-		}
+		bAttack |= (bHostile || bForce) && E->HasWeapon() && E->CanTarget(Target);
 	}
-	if (bAny)
-	{
-		UCmdAudioSubsystem::Play2D(this, bAttack ? TEXT("ack_attack") : TEXT("ack"));
-		ACmdEffect::SpawnFlash(GetWorld(), Target->GetActorLocation() + FVector(0.f, 0.f, 30.f), bAttack ? FLinearColor(1.f, 0.15f, 0.1f) : FLinearColor(0.2f, 1.f, 0.3f), 0.35f);
-	}
+	UCmdAudioSubsystem::Play2D(this, bAttack ? TEXT("ack_attack") : TEXT("ack"));
+	ACmdEffect::SpawnFlashLocal(GetWorld(), Target->GetActorLocation() + FVector(0.f, 0.f, 30.f), bAttack ? FLinearColor(1.f, 0.15f, 0.1f) : FLinearColor(0.2f, 1.f, 0.3f), 0.35f);
 }
 
 void ACmdPlayerController::IssueMove(const FIntPoint& Cell, bool bAttackMove)
 {
-	const ACmdGameState* GS = GetCmdGameState();
-	const UCmdGridSubsystem* Grid = GetWorld()->GetSubsystem<UCmdGridSubsystem>();
-	TArray<ACmdUnit*> Units;
-	for (ACmdEntity* E : GetSelection())
-	{
-		ACmdUnit* U = Cast<ACmdUnit>(E);
-		if (U && U->TeamId == GS->LocalTeamId)
-		{
-			Units.Add(U);
-		}
-	}
-	if (Units.Num() == 0 || !Grid)
+	FCmdCommand Command = MakeUnitCommand(bAttackMove ? ECmdCommandType::AttackMove : ECmdCommandType::Move);
+	Command.Cell = Cell;
+	if (Command.Units.Num() == 0)
 	{
 		return;
 	}
-
-	// Closest units claim the cells nearest the click: a tidy blob formation.
-	const FVector Dest = Cmd::CellToWorld(Cell);
-	Units.Sort([&Dest](const ACmdUnit& A, const ACmdUnit& B)
-	{
-		return FVector::DistSquared2D(A.GetActorLocation(), Dest) < FVector::DistSquared2D(B.GetActorLocation(), Dest);
-	});
-	TSet<FIntPoint> Used;
-	for (ACmdUnit* U : Units)
-	{
-		FIntPoint Target = Cell;
-		if (!U->IsAircraft())
-		{
-			Target = Grid->FindNearestPassable(Cell, 12, &Used);
-		}
-		else
-		{
-			Target = Cell + FIntPoint(Used.Num() % 3 - 1, Used.Num() / 3);
-		}
-		Used.Add(Target);
-		U->OrderMove(Target, bAttackMove);
-	}
+	SendCommand(Command);
 	UCmdAudioSubsystem::Play2D(this, bAttackMove ? TEXT("ack_attack") : TEXT("ack"));
-	ACmdEffect::SpawnFlash(GetWorld(), Dest + FVector(0.f, 0.f, 20.f), bAttackMove ? FLinearColor(1.f, 0.5f, 0.1f) : FLinearColor(0.2f, 1.f, 0.3f), 0.3f);
+	ACmdEffect::SpawnFlashLocal(GetWorld(), Cmd::CellToWorld(Cell) + FVector(0.f, 0.f, 20.f), bAttackMove ? FLinearColor(1.f, 0.5f, 0.1f) : FLinearColor(0.2f, 1.f, 0.3f), 0.3f);
 }
 
 void ACmdPlayerController::CommandStop()
 {
-	for (ACmdEntity* E : GetSelection())
+	const FCmdCommand Command = MakeUnitCommand(ECmdCommandType::Stop);
+	if (Command.Units.Num() > 0)
 	{
-		if (ACmdUnit* U = Cast<ACmdUnit>(E))
-		{
-			if (U->TeamId == GetLocalTeam())
-			{
-				U->OrderStop();
-			}
-		}
+		SendCommand(Command);
 	}
 }
 
 void ACmdPlayerController::CommandGuard()
 {
-	for (ACmdEntity* E : GetSelection())
+	const FCmdCommand Command = MakeUnitCommand(ECmdCommandType::Guard);
+	if (Command.Units.Num() > 0)
 	{
-		if (ACmdUnit* U = Cast<ACmdUnit>(E))
-		{
-			if (U->TeamId == GetLocalTeam())
-			{
-				U->OrderGuard();
-			}
-		}
+		SendCommand(Command);
 	}
 }
 
 void ACmdPlayerController::CommandDeploy()
 {
-	for (ACmdEntity* E : GetSelection())
+	FCmdCommand Command = MakeUnitCommand(ECmdCommandType::Deploy);
+	Command.Units.RemoveAll([](const TObjectPtr<ACmdEntity>& E) { return !E->Def || E->Def->DeploysInto.IsNone(); });
+	if (Command.Units.Num() > 0)
 	{
-		if (ACmdUnit* U = Cast<ACmdUnit>(E))
-		{
-			if (U->TeamId == GetLocalTeam() && U->Def && !U->Def->DeploysInto.IsNone())
-			{
-				U->TryDeploy();
-			}
-		}
+		SendCommand(Command);
 	}
 }
-
 // ---------------------------------------------------------------------------
 // Modes & placement ghost
 // ---------------------------------------------------------------------------

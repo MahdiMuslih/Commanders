@@ -1,4 +1,5 @@
 #include "Gameplay/CmdEffect.h"
+#include "Game/CmdGameState.h"
 #include "Audio/CmdAudioSubsystem.h"
 #include "World/CmdVisualSubsystem.h"
 #include "Components/PointLightComponent.h"
@@ -44,7 +45,7 @@ ACmdEffect* ACmdEffect::SpawnBase(UWorld* World, const FVector& Location, EKind 
 	return E;
 }
 
-void ACmdEffect::SpawnExplosion(UWorld* World, const FVector& Location, float InSize, bool bWithDebris)
+void ACmdEffect::SpawnExplosionLocal(UWorld* World, const FVector& Location, float InSize, bool bWithDebris)
 {
 	UCmdVisualSubsystem* Visuals = UCmdVisualSubsystem::Get(World);
 	if (InSize >= 0.9f)
@@ -70,7 +71,7 @@ void ACmdEffect::SpawnExplosion(UWorld* World, const FVector& Location, float In
 	E->Light->SetAttenuationRadius(400.f + 500.f * InSize);
 	E->Light->SetIntensity(E->LightPeak);
 
-	SpawnSmoke(World, Location + FVector(0.f, 0.f, 30.f), InSize);
+	SpawnSmokeLocal(World, Location + FVector(0.f, 0.f, 30.f), InSize);
 	if (bWithDebris)
 	{
 		const int32 Count = FMath::Clamp(FMath::RoundToInt(InSize * 4.f), 2, 10);
@@ -90,7 +91,7 @@ void ACmdEffect::SpawnExplosion(UWorld* World, const FVector& Location, float In
 	}
 }
 
-void ACmdEffect::SpawnFlash(UWorld* World, const FVector& Location, const FLinearColor& Color, float InSize)
+void ACmdEffect::SpawnFlashLocal(UWorld* World, const FVector& Location, const FLinearColor& Color, float InSize)
 {
 	UCmdVisualSubsystem* Visuals = UCmdVisualSubsystem::Get(World);
 	ACmdEffect* E = SpawnBase(World, Location, EKind::Flash, 0.12f + InSize * 0.1f);
@@ -109,7 +110,7 @@ void ACmdEffect::SpawnFlash(UWorld* World, const FVector& Location, const FLinea
 	E->Light->SetIntensity(E->LightPeak);
 }
 
-void ACmdEffect::SpawnBeam(UWorld* World, const FVector& From, const FVector& To, const FLinearColor& Color)
+void ACmdEffect::SpawnBeamLocal(UWorld* World, const FVector& From, const FVector& To, const FLinearColor& Color)
 {
 	UCmdVisualSubsystem* Visuals = UCmdVisualSubsystem::Get(World);
 	const FVector Mid = (From + To) * 0.5f;
@@ -131,10 +132,10 @@ void ACmdEffect::SpawnBeam(UWorld* World, const FVector& From, const FVector& To
 	E->Light->SetLightColor(Color);
 	E->Light->SetAttenuationRadius(FMath::Max(400.f, Length * 0.6f));
 	E->Light->SetIntensity(E->LightPeak);
-	SpawnFlash(World, To, Color, 0.35f);
+	SpawnFlashLocal(World, To, Color, 0.35f);
 }
 
-void ACmdEffect::SpawnSmoke(UWorld* World, const FVector& Location, float InSize)
+void ACmdEffect::SpawnSmokeLocal(UWorld* World, const FVector& Location, float InSize)
 {
 	UCmdVisualSubsystem* Visuals = UCmdVisualSubsystem::Get(World);
 	const int32 Count = FMath::Clamp(FMath::RoundToInt(InSize * 2.f), 1, 5);
@@ -200,4 +201,61 @@ void ACmdEffect::Tick(float DeltaSeconds)
 		}
 		break;
 	}
+}
+
+// ---------------------------------------------------------------------------
+// Network-aware entry points: a networked server broadcasts, everyone else spawns locally.
+// ---------------------------------------------------------------------------
+
+namespace
+{
+	ACmdGameState* GetBroadcaster(UWorld* World)
+	{
+		if (!World)
+		{
+			return nullptr;
+		}
+		const ENetMode Mode = World->GetNetMode();
+		return (Mode == NM_ListenServer || Mode == NM_DedicatedServer) ? World->GetGameState<ACmdGameState>() : nullptr;
+	}
+}
+
+void ACmdEffect::SpawnExplosion(UWorld* World, const FVector& Location, float InSize, bool bWithDebris)
+{
+	if (ACmdGameState* GS = GetBroadcaster(World))
+	{
+		GS->MulticastEffect(static_cast<uint8>(ECmdNetEffect::Explosion), Location, Location, FColor::White, InSize, bWithDebris);
+		return;
+	}
+	SpawnExplosionLocal(World, Location, InSize, bWithDebris);
+}
+
+void ACmdEffect::SpawnFlash(UWorld* World, const FVector& Location, const FLinearColor& Color, float InSize)
+{
+	if (ACmdGameState* GS = GetBroadcaster(World))
+	{
+		GS->MulticastEffect(static_cast<uint8>(ECmdNetEffect::Flash), Location, Location, Color.ToFColor(false), InSize, false);
+		return;
+	}
+	SpawnFlashLocal(World, Location, Color, InSize);
+}
+
+void ACmdEffect::SpawnBeam(UWorld* World, const FVector& From, const FVector& To, const FLinearColor& Color)
+{
+	if (ACmdGameState* GS = GetBroadcaster(World))
+	{
+		GS->MulticastEffect(static_cast<uint8>(ECmdNetEffect::Beam), From, To, Color.ToFColor(false), 1.f, false);
+		return;
+	}
+	SpawnBeamLocal(World, From, To, Color);
+}
+
+void ACmdEffect::SpawnSmoke(UWorld* World, const FVector& Location, float InSize)
+{
+	if (ACmdGameState* GS = GetBroadcaster(World))
+	{
+		GS->MulticastEffect(static_cast<uint8>(ECmdNetEffect::Smoke), Location, Location, FColor::White, InSize, false);
+		return;
+	}
+	SpawnSmokeLocal(World, Location, InSize);
 }

@@ -7,12 +7,61 @@
 #include "Mission/CmdMissionDirector.h"
 #include "Data/CmdDataRegistry.h"
 #include "World/CmdGridSubsystem.h"
+#include "Gameplay/CmdEffect.h"
+#include "Gameplay/CmdProjectile.h"
+#include "Game/CmdPlayerState.h"
+#include "Player/CmdPlayerController.h"
+#include "World/CmdMapGenerator.h"
+#include "World/CmdWorldBuilder.h"
 #include "Engine/World.h"
+#include "EngineUtils.h"
+#include "World/CmdTerrainActor.h"
+#include "Net/UnrealNetwork.h"
 
 ACmdGameState::ACmdGameState()
 {
 	PrimaryActorTick.bCanEverTick = true;
 	PrimaryActorTick.TickGroup = TG_PrePhysics;
+	PrimaryActorTick.bTickEvenWhenPaused = true;	// lobby UI and late world builds
+	NetUpdateFrequency = 10.f;
+}
+
+void ACmdGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(ACmdGameState, Teams);
+	DOREPLIFETIME(ACmdGameState, Flow);
+	DOREPLIFETIME(ACmdGameState, MatchTime);
+	DOREPLIFETIME(ACmdGameState, MatchResultText);
+	DOREPLIFETIME(ACmdGameState, LobbySettings);
+	DOREPLIFETIME(ACmdGameState, MatchConfig);
+}
+
+void ACmdGameState::BeginPlay()
+{
+	Super::BeginPlay();
+	// Network clients have no game mode, so they start their own audio here.
+	if (!HasAuthority())
+	{
+		if (UCmdAudioSubsystem* Audio = UCmdAudioSubsystem::Get(this))
+		{
+			Audio->EnsureForWorld(GetWorld());
+		}
+	}
+}
+
+ECmdFlowState ACmdGameState::GetDisplayFlow() const
+{
+	if ((Flow == ECmdFlowState::Victory || Flow == ECmdFlowState::Defeat) && IsNetworked())
+	{
+		const APlayerController* PC = GetWorld()->GetFirstPlayerController();
+		const ACmdPlayerState* PS = PC ? PC->GetPlayerState<ACmdPlayerState>() : nullptr;
+		if (PS && PS->MatchResult != ECmdMatchResult::None)
+		{
+			return PS->MatchResult == ECmdMatchResult::Victory ? ECmdFlowState::Victory : ECmdFlowState::Defeat;
+		}
+	}
+	return Flow;
 }
 
 // ---------------------------------------------------------------------------
@@ -91,6 +140,10 @@ void ACmdGameState::RegisterEntity(ACmdEntity* Entity)
 		T->Owned.FindOrAdd(Entity->DefId)++;
 	}
 	RecalculatePower();
+	if (!HasAuthority() && bClientWorldBuilt)
+	{
+		Entity->RefreshTeamColor();	// teams are known by now
+	}
 	// Reveal immediately so freshly spawned units do not pop out of the shroud a frame late.
 	if (UCmdGridSubsystem* Grid = GetWorld()->GetSubsystem<UCmdGridSubsystem>())
 	{
@@ -123,15 +176,16 @@ void ACmdGameState::UnregisterEntity(ACmdEntity* Entity)
 
 void ACmdGameState::OnEntityDamaged(ACmdEntity* Victim, ACmdEntity* Attacker)
 {
-	if (!Victim || Victim->TeamId != LocalTeamId || !Attacker || Flow != ECmdFlowState::Playing)
+	FCmdTeam* Team = Victim ? GetTeam(Victim->TeamId) : nullptr;
+	if (!Team || !Attacker || Flow != ECmdFlowState::Playing || Team->bIsAI || Team->bIsNeutral)
 	{
 		return;
 	}
 	const float Now = GetWorld()->GetTimeSeconds();
-	if (Now - LastAttackWarning > 20.f)
+	if (Now - Team->LastAttackWarning > 20.f)
 	{
-		LastAttackWarning = Now;
-		AddMessage(LocalTeamId, Victim->IsBuilding() ? TEXT("Our base is under attack!") : TEXT("Unit under attack."), FLinearColor(1.f, 0.35f, 0.25f), TEXT("alarm"));
+		Team->LastAttackWarning = Now;
+		AddMessage(Victim->TeamId, Victim->IsBuilding() ? TEXT("Our base is under attack!") : TEXT("Unit under attack."), FLinearColor(1.f, 0.35f, 0.25f), TEXT("alarm"));
 	}
 }
 
@@ -152,11 +206,11 @@ void ACmdGameState::OnEntityKilled(ACmdEntity* Victim, ACmdEntity* Killer)
 			++K->Stats.Kills;
 		}
 	}
-	if (Victim->TeamId == LocalTeamId && Flow == ECmdFlowState::Playing)
+	if (Flow == ECmdFlowState::Playing)
 	{
 		if (Victim->IsBuilding())
 		{
-			AddMessage(LocalTeamId, FString::Printf(TEXT("Structure lost: %s"), Victim->Def ? *Victim->Def->Name : TEXT("")), FLinearColor(1.f, 0.4f, 0.3f), TEXT("objective_failed"));
+			AddMessage(Victim->TeamId, FString::Printf(TEXT("Structure lost: %s"), Victim->Def ? *Victim->Def->Name : TEXT("")), FLinearColor(1.f, 0.4f, 0.3f), TEXT("objective_failed"));
 		}
 	}
 	if (MissionDirector)
@@ -710,10 +764,28 @@ void ACmdGameState::RecalculatePower()
 
 void ACmdGameState::AddMessage(int32 TeamId, const FString& Text, const FLinearColor& Color, FName Sound)
 {
-	if (TeamId != LocalTeamId && TeamId != INDEX_NONE)
+	const ENetMode NetMode = GetNetMode();
+	if (NetMode == NM_ListenServer || NetMode == NM_DedicatedServer)
 	{
+		// Route to the machines of the players who own that team (the host included).
+		for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
+		{
+			ACmdPlayerController* PC = Cast<ACmdPlayerController>(It->Get());
+			if (PC && (TeamId == INDEX_NONE || PC->GetCommandTeam() == TeamId))
+			{
+				PC->ClientShowMessage(Text, Color, Sound);
+			}
+		}
 		return;
 	}
+	if (TeamId == LocalTeamId || TeamId == INDEX_NONE)
+	{
+		ShowMessageLocal(Text, Color, Sound);
+	}
+}
+
+void ACmdGameState::ShowMessageLocal(const FString& Text, const FLinearColor& Color, FName Sound)
+{
 	UCmdAudioSubsystem::Play2D(this, Sound);
 	// Collapse duplicates.
 	if (Messages.Num() > 0 && Messages.Last().Text == Text)
@@ -726,6 +798,11 @@ void ACmdGameState::AddMessage(int32 TeamId, const FString& Text, const FLinearC
 	M.Color = Color;
 	M.Time = GetWorld()->GetTimeSeconds();
 	Messages.Add(M);
+	ChatLog.Add(M);
+	while (ChatLog.Num() > 10)
+	{
+		ChatLog.RemoveAt(0);
+	}
 	while (Messages.Num() > 6)
 	{
 		Messages.RemoveAt(0);
@@ -743,6 +820,28 @@ void ACmdGameState::Tick(float DeltaSeconds)
 	// Clean out anything that was destroyed without telling us.
 	Entities.RemoveAll([](const TObjectPtr<ACmdEntity>& E) { return !IsValid(E); });
 
+	if (!HasAuthority())
+	{
+		// Clients only derive what they display; the server simulates.
+		TryBuildClientWorld();
+		UpdateSpectatorView();
+		TickShroud(DeltaSeconds);
+		PowerTimer -= DeltaSeconds;
+		if (PowerTimer <= 0.f)
+		{
+			PowerTimer = 1.f;
+			RecalculatePower();
+		}
+		const float ClientNow = GetWorld()->GetTimeSeconds();
+		Messages.RemoveAll([ClientNow](const FCmdMessage& M) { return ClientNow - M.Time > 7.f; });
+		return;
+	}
+	if (GetWorld()->IsPaused())
+	{
+		return;
+	}
+	UpdateSpectatorView();
+
 	const bool bSimulating = Flow == ECmdFlowState::Playing || Flow == ECmdFlowState::MainMenu || Flow == ECmdFlowState::Cinematic;
 	if (Flow == ECmdFlowState::Playing)
 	{
@@ -759,13 +858,17 @@ void ACmdGameState::Tick(float DeltaSeconds)
 	{
 		PowerTimer = 1.f;
 		RecalculatePower();
-		if (const FCmdTeam* Local = GetLocalTeam())
+		for (FCmdTeam& T : Teams)
 		{
-			if (Local->HasLowPower() && !bLowPowerWarned && Flow == ECmdFlowState::Playing)
+			if (T.bIsAI || T.bIsNeutral)
 			{
-				AddMessage(LocalTeamId, TEXT("Low power."), FLinearColor(1.f, 0.6f, 0.2f), TEXT("low_power"));
+				continue;
 			}
-			bLowPowerWarned = Local->HasLowPower();
+			if (T.HasLowPower() && !T.bLowPowerWarned && Flow == ECmdFlowState::Playing)
+			{
+				AddMessage(T.Id, TEXT("Low power."), FLinearColor(1.f, 0.6f, 0.2f), TEXT("low_power"));
+			}
+			T.bLowPowerWarned = T.HasLowPower();
 		}
 	}
 
@@ -776,6 +879,15 @@ void ACmdGameState::Tick(float DeltaSeconds)
 		if (UCmdGridSubsystem* Grid = GetWorld()->GetSubsystem<UCmdGridSubsystem>())
 		{
 			Grid->GrowOre();
+		}
+	}
+	if (IsNetworked())
+	{
+		OreFlushTimer -= DeltaSeconds;
+		if (OreFlushTimer <= 0.f)
+		{
+			OreFlushTimer = 0.4f;
+			FlushOreChanges();
 		}
 	}
 
@@ -834,14 +946,192 @@ void ACmdGameState::CheckDefeat()
 		if (CountTeamEntities(T.Id) == 0)
 		{
 			T.bDefeated = true;
-			if (T.Id != LocalTeamId && Flow == ECmdFlowState::Playing)
+			if ((T.Id != LocalTeamId || IsNetworked()) && Flow == ECmdFlowState::Playing)
 			{
-				AddMessage(LocalTeamId, FString::Printf(TEXT("%s has been eliminated."), *T.Name), FLinearColor(0.6f, 0.9f, 1.f), TEXT("objective"));
+				AddMessage(INDEX_NONE, FString::Printf(TEXT("%s has been eliminated."), *T.Name), FLinearColor(0.6f, 0.9f, 1.f), TEXT("objective"));
 			}
 			if (MissionDirector)
 			{
 				MissionDirector->OnTeamDefeated(T.Id);
 			}
 		}
+	}
+}
+
+// ---------------------------------------------------------------------------
+// Networking
+// ---------------------------------------------------------------------------
+
+void ACmdGameState::BroadcastSound(FName Sound, const FVector& Location)
+{
+	if (IsNetworked() && HasAuthority())
+	{
+		MulticastSound(Sound, Location);
+	}
+	else
+	{
+		UCmdAudioSubsystem::PlayAt(this, Sound, Location);
+	}
+}
+
+void ACmdGameState::MulticastSound_Implementation(FName Sound, FVector_NetQuantize Location)
+{
+	UCmdAudioSubsystem::PlayAt(this, Sound, Location);
+}
+
+void ACmdGameState::MulticastShot_Implementation(FName WeaponId, FVector_NetQuantize Muzzle, ACmdEntity* Target, FVector_NetQuantize TargetLocation)
+{
+	const UCmdDataRegistry* Data = UCmdDataRegistry::Get(this);
+	const FCmdWeaponDef* Weapon = Data ? Data->GetWeapon(WeaponId) : nullptr;
+	UWorld* World = GetWorld();
+	if (!Weapon || !World)
+	{
+		return;
+	}
+	if (Weapon->MuzzleFlash > 0.f)
+	{
+		ACmdEffect::SpawnFlashLocal(World, Muzzle, Weapon->Color, 0.25f * Weapon->MuzzleFlash);
+	}
+	UCmdAudioSubsystem::PlayWeapon(this, *Weapon, Muzzle);
+
+	if (Weapon->ProjectileSpeed <= 0.f)
+	{
+		for (int32 i = 0; i < Weapon->Burst; ++i)
+		{
+			ACmdEffect::SpawnBeamLocal(World, Muzzle, TargetLocation, Weapon->Color);
+		}
+		ACmdProjectile::SpawnImpactEffects(World, *Weapon, TargetLocation);
+		return;
+	}
+	// The server flies real projectiles; everyone else gets harmless look-alikes.
+	if (!HasAuthority())
+	{
+		for (int32 i = 0; i < Weapon->Burst; ++i)
+		{
+			const FVector Spread = Weapon->Burst > 1 ? FVector(FMath::FRandRange(-40.f, 40.f), FMath::FRandRange(-40.f, 40.f), 0.f) : FVector::ZeroVector;
+			ACmdProjectile::Launch(World, nullptr, *Weapon, FVector(Muzzle) + Spread * 0.3f, Target, FVector(TargetLocation) + Spread, i * 0.08f, true);
+		}
+	}
+}
+
+void ACmdGameState::MulticastEffect_Implementation(uint8 Kind, FVector_NetQuantize A, FVector_NetQuantize B, FColor Color, float Size, bool bFlag)
+{
+	UWorld* World = GetWorld();
+	switch (static_cast<ECmdNetEffect>(Kind))
+	{
+	case ECmdNetEffect::Explosion: ACmdEffect::SpawnExplosionLocal(World, A, Size, bFlag); break;
+	case ECmdNetEffect::Flash: ACmdEffect::SpawnFlashLocal(World, A, FLinearColor(Color), Size); break;
+	case ECmdNetEffect::Beam: ACmdEffect::SpawnBeamLocal(World, A, B, FLinearColor(Color)); break;
+	case ECmdNetEffect::Smoke: ACmdEffect::SpawnSmokeLocal(World, A, Size); break;
+	default: break;
+	}
+}
+
+void ACmdGameState::FlushOreChanges()
+{
+	UCmdGridSubsystem* Grid = GetWorld()->GetSubsystem<UCmdGridSubsystem>();
+	if (!Grid)
+	{
+		return;
+	}
+	TArray<FCmdOreDelta> Changes;
+	Grid->ConsumeOreChanges(Changes);
+	if (Changes.Num() > 0)
+	{
+		MulticastOre(Changes);
+	}
+}
+
+void ACmdGameState::MulticastOre_Implementation(const TArray<FCmdOreDelta>& Changes)
+{
+	if (HasAuthority())
+	{
+		return;	// the server's grid is the source of these changes
+	}
+	if (UCmdGridSubsystem* Grid = GetWorld()->GetSubsystem<UCmdGridSubsystem>())
+	{
+		for (const FCmdOreDelta& Change : Changes)
+		{
+			Grid->ApplyOreDelta(Change.Index, Change.Amount);
+		}
+	}
+}
+
+void ACmdGameState::OnRep_MatchConfig()
+{
+	TryBuildClientWorld();
+}
+
+void ACmdGameState::TryBuildClientWorld()
+{
+	if (HasAuthority() || bClientWorldBuilt || !MatchConfig.bValid)
+	{
+		return;
+	}
+	// Which seat is ours? Our PlayerState may arrive after the config does.
+	ACmdPlayerController* PC = Cast<ACmdPlayerController>(GetWorld()->GetFirstPlayerController());
+	const APlayerState* PS = PC ? PC->PlayerState.Get() : nullptr;
+	if (!PS)
+	{
+		return;
+	}
+	int32 Seat = INDEX_NONE;
+	for (int32 i = 0; i < MatchConfig.Slots.Num(); ++i)
+	{
+		if (MatchConfig.Slots[i].bHuman && MatchConfig.Slots[i].PlayerId == PS->GetPlayerId())
+		{
+			Seat = i;
+			break;
+		}
+	}
+	if (Seat == INDEX_NONE || !Teams.IsValidIndex(Seat))
+	{
+		return;	// teams not replicated yet, try again next tick
+	}
+
+	bClientWorldBuilt = true;
+	LocalTeamId = Seat;
+	bShroudEnabled = true;
+	const TSharedPtr<FJsonObject> Scenario = CmdMapGenerator::GenerateMatch(MatchConfig, UCmdDataRegistry::Get(this), Seat);
+	const FCmdBuiltWorld Built = CmdWorldBuilder::BuildEnvironment(GetWorld(), Scenario, true, GetAlliance(Seat), Seat);
+
+	// Entities that replicated in before the grid and team list existed need their
+	// footprints and team colours.
+	if (UCmdGridSubsystem* Grid = GetWorld()->GetSubsystem<UCmdGridSubsystem>())
+	{
+		for (ACmdEntity* E : Entities)
+		{
+			if (E)
+			{
+				E->RefreshTeamColor();
+			}
+			if (ACmdBuilding* B = Cast<ACmdBuilding>(E))
+			{
+				if (B->Def)
+				{
+					Grid->SetBuilding(B->Origin, B->Def->Footprint, B);
+				}
+			}
+		}
+	}
+	PC->OnSessionBuilt(Built.CameraStart, false);
+}
+
+void ACmdGameState::UpdateSpectatorView()
+{
+	const FCmdTeam* Local = GetTeam(LocalTeamId);
+	if (bSpectatorView || !IsNetworked() || !Local || !Local->bDefeated || Flow != ECmdFlowState::Playing)
+	{
+		return;
+	}
+	bSpectatorView = true;
+	bShroudEnabled = false;
+	if (UCmdGridSubsystem* Grid = GetWorld()->GetSubsystem<UCmdGridSubsystem>())
+	{
+		Grid->SetShroudViewer(-1);
+	}
+	for (TActorIterator<ACmdTerrainActor> It(GetWorld()); It; ++It)
+	{
+		It->SetShroudVisible(false);
 	}
 }

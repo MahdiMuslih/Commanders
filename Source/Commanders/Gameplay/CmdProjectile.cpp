@@ -23,7 +23,7 @@ ACmdProjectile::ACmdProjectile()
 	Light->SetIntensity(0.f);
 }
 
-ACmdProjectile* ACmdProjectile::Launch(UWorld* World, ACmdEntity* InShooter, const FCmdWeaponDef& InWeapon, const FVector& From, ACmdEntity* InTarget, const FVector& TargetLocation, float InDelay)
+ACmdProjectile* ACmdProjectile::Launch(UWorld* World, ACmdEntity* InShooter, const FCmdWeaponDef& InWeapon, const FVector& From, ACmdEntity* InTarget, const FVector& TargetLocation, float InDelay, bool bInCosmetic)
 {
 	if (!World)
 	{
@@ -45,6 +45,7 @@ ACmdProjectile* ACmdProjectile::Launch(UWorld* World, ACmdEntity* InShooter, con
 	P->Distance = FMath::Max(1.f, FVector::Dist(From, TargetLocation));
 	P->Delay = InDelay;
 	P->bHoming = InWeapon.ArcHeight <= 0.f;
+	P->bCosmetic = bInCosmetic;
 
 	if (UCmdVisualSubsystem* Visuals = UCmdVisualSubsystem::Get(World))
 	{
@@ -142,28 +143,44 @@ void ACmdProjectile::Detonate()
 	{
 		DirectTarget = nullptr;
 	}
-	ApplyImpact(GetWorld(), Shooter.Get(), ShooterTeam, Weapon, DirectTarget, GetActorLocation());
+	if (bCosmetic)
+	{
+		SpawnImpactEffects(GetWorld(), Weapon, GetActorLocation());
+	}
+	else
+	{
+		ApplyImpact(GetWorld(), Shooter.Get(), ShooterTeam, Weapon, DirectTarget, GetActorLocation());
+	}
 	Destroy();
 }
 
-void ACmdProjectile::ApplyImpact(UWorld* World, ACmdEntity* InShooter, int32 InShooterTeam, const FCmdWeaponDef& InWeapon, ACmdEntity* DirectTarget, const FVector& Location)
+void ACmdProjectile::SpawnImpactEffects(UWorld* World, const FCmdWeaponDef& InWeapon, const FVector& Location)
+{
+	const bool bBig = InWeapon.Splash > 0.4f || InWeapon.Warhead == ECmdWarhead::HighExplosive;
+	if (InWeapon.Warhead == ECmdWarhead::Fire)
+	{
+		ACmdEffect::SpawnFlashLocal(World, Location, FLinearColor(1.f, 0.35f, 0.05f), 0.6f + InWeapon.Splash);
+	}
+	else if (bBig)
+	{
+		ACmdEffect::SpawnExplosionLocal(World, Location, 0.4f + InWeapon.Splash * 0.6f, false);
+	}
+	else
+	{
+		ACmdEffect::SpawnFlashLocal(World, Location, InWeapon.Color, 0.15f);
+	}
+}
+
+void ACmdProjectile::ApplyImpact(UWorld* World, ACmdEntity* InShooter, int32 InShooterTeam, const FCmdWeaponDef& InWeapon, ACmdEntity* DirectTarget, const FVector& Location, bool bSpawnEffects)
 {
 	if (!World)
 	{
 		return;
 	}
-	const bool bBig = InWeapon.Splash > 0.4f || InWeapon.Warhead == ECmdWarhead::HighExplosive;
-	if (InWeapon.Warhead == ECmdWarhead::Fire)
+	// Impacts are drawn by whoever flew the projectile: clients have their own cosmetic copy.
+	if (bSpawnEffects)
 	{
-		ACmdEffect::SpawnFlash(World, Location, FLinearColor(1.f, 0.35f, 0.05f), 0.6f + InWeapon.Splash);
-	}
-	else if (bBig)
-	{
-		ACmdEffect::SpawnExplosion(World, Location, 0.4f + InWeapon.Splash * 0.6f, false);
-	}
-	else
-	{
-		ACmdEffect::SpawnFlash(World, Location, InWeapon.Color, 0.15f);
+		SpawnImpactEffects(World, InWeapon, Location);
 	}
 
 	if (DirectTarget && DirectTarget->IsAlive())

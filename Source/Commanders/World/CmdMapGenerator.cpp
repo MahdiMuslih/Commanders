@@ -1,5 +1,6 @@
 #include "World/CmdMapGenerator.h"
 #include "Game/CmdGameInstance.h"
+#include "Game/CmdNetTypes.h"
 #include "Data/CmdDataRegistry.h"
 #include "Dom/JsonObject.h"
 #include "Dom/JsonValue.h"
@@ -169,16 +170,52 @@ namespace
 
 namespace CmdMapGenerator
 {
-	TSharedPtr<FJsonObject> GenerateSkirmish(const FCmdSkirmishSettings& S, const UCmdDataRegistry* Data)
+	FCmdMatchConfig MakeSkirmishConfig(const FCmdSkirmishSettings& S)
+	{
+		FCmdMatchConfig Config;
+		Config.bValid = true;
+		Config.Seed = S.Seed;
+		Config.MapSize = S.MapSize;
+		Config.Theme = S.Theme;
+		Config.StartingCredits = S.StartingCredits;
+
+		const FName RivalFaction = S.PlayerFaction == TEXT("pact") ? FName(TEXT("concord")) : FName(TEXT("pact"));
+		FCmdMatchSlot Player;
+		Player.Name = TEXT("You");
+		Player.Faction = S.PlayerFaction;
+		Player.Alliance = 0;
+		Player.bHuman = true;
+		Player.Difficulty = S.Difficulty;
+		Config.Slots.Add(Player);
+
+		const int32 Players = FMath::Clamp(S.NumEnemies + 1, 2, CmdConst::MaxPlayers);
+		for (int32 i = 1; i < Players; ++i)
+		{
+			FCmdMatchSlot AI;
+			AI.Name = FString::Printf(TEXT("Commander %d"), i);
+			AI.Faction = (i % 2 == 1) ? RivalFaction : S.PlayerFaction;
+			AI.Alliance = i;
+			AI.Difficulty = S.Difficulty;
+			Config.Slots.Add(AI);
+		}
+		return Config;
+	}
+
+	TSharedPtr<FJsonObject> GenerateSkirmish(const FCmdSkirmishSettings& Settings, const UCmdDataRegistry* Data)
+	{
+		return GenerateMatch(MakeSkirmishConfig(Settings), Data, 0);
+	}
+
+	TSharedPtr<FJsonObject> GenerateMatch(const FCmdMatchConfig& Config, const UCmdDataRegistry* Data, int32 LocalSeat)
 	{
 		FBuilder B;
-		B.Size = FMath::Clamp(S.MapSize, 48, 128);
-		B.Rng.Initialize(S.Seed);
+		B.Size = FMath::Clamp(Config.MapSize, 48, 128);
+		B.Rng.Initialize(Config.Seed);
 		const int32 N = B.Size;
-		const int32 Players = FMath::Clamp(S.NumEnemies + 1, 2, 4);
+		const int32 Players = FMath::Clamp(Config.Slots.Num(), 1, CmdConst::MaxPlayers);
 
 		TArray<FIntPoint> Starts = { FIntPoint(9, 9), FIntPoint(N - 12, N - 12), FIntPoint(N - 12, 9), FIntPoint(9, N - 12) };
-		// Shuffle so the player doesn't always get the same corner.
+		// Shuffle so nobody always gets the same corner.
 		for (int32 i = Starts.Num() - 1; i > 0; --i)
 		{
 			Starts.Swap(i, B.Rng.RandRange(0, i));
@@ -186,23 +223,28 @@ namespace CmdMapGenerator
 		const FIntPoint Center(N / 2, N / 2);
 
 		// Teams ------------------------------------------------------------------
-		static const TCHAR* EnemyColors[3] = { TEXT("red"), TEXT("yellow"), TEXT("green") };
-		const FString PlayerFaction = S.PlayerFaction.ToString();
-		const FString RivalFaction = PlayerFaction == TEXT("pact") ? TEXT("concord") : TEXT("pact");
-		auto FactionFor = [&](int32 Index) -> FString { return (Index % 2 == 1) ? RivalFaction : PlayerFaction; };
-		B.AddTeam(TEXT("You"), PlayerFaction, true, false, 0, S.StartingCredits, PlayerFaction == TEXT("pact") ? TEXT("red") : TEXT("blue"), S.Difficulty);
-		for (int32 i = 1; i < Players; ++i)
+		// Each side prefers its faction colour; later seats take the next free one.
+		TArray<FString> UsedColors;
+		static const TCHAR* Palette[] = { TEXT("blue"), TEXT("red"), TEXT("yellow"), TEXT("green"), TEXT("orange") };
+		for (int32 i = 0; i < Players; ++i)
 		{
-			const FString Faction = FactionFor(i);
-			FString Color = EnemyColors[(i - 1) % 3];
-			if (PlayerFaction == TEXT("pact") && Color == TEXT("red"))
+			const FCmdMatchSlot& Slot = Config.Slots[i];
+			FString Color = Slot.Faction == TEXT("pact") ? TEXT("red") : TEXT("blue");
+			for (int32 c = 0; UsedColors.Contains(Color) && c < static_cast<int32>(UE_ARRAY_COUNT(Palette)); ++c)
 			{
-				Color = TEXT("blue");
+				Color = Palette[c];
 			}
-			B.AddTeam(FString::Printf(TEXT("Commander %d"), i), Faction, false, true, i, S.StartingCredits, Color, S.Difficulty);
+			UsedColors.Add(Color);
+			const FString Name = Slot.Name.IsEmpty() ? FString::Printf(TEXT("Commander %d"), i) : Slot.Name;
+			B.AddTeam(Name, Slot.Faction.ToString(), i == LocalSeat, !Slot.bHuman, FMath::Clamp(Slot.Alliance, 0, CmdConst::MaxAlliances - 2), Config.StartingCredits, Color, Slot.Difficulty);
+			if (Slot.bHuman)
+			{
+				TSharedPtr<FJsonObject> TeamJson = B.Teams.Last()->AsObject();
+				TeamJson->SetBoolField(TEXT("human"), true);
+			}
 		}
 		const int32 NeutralTeam = Players;
-		B.AddTeam(TEXT("Civilians"), TEXT("neutral"), false, false, 7, 0, TEXT("grey"), 1, true);
+		B.AddTeam(TEXT("Civilians"), TEXT("neutral"), false, false, CmdConst::MaxAlliances - 1, 0, TEXT("grey"), 1, true);
 
 		// Bases & resources ------------------------------------------------------
 		for (int32 i = 0; i < Players; ++i)
@@ -213,7 +255,7 @@ namespace CmdMapGenerator
 			const FIntPoint OreAt = P + FIntPoint(FMath::RoundToInt(ToCenter.X * 9.f), FMath::RoundToInt(ToCenter.Y * 9.f));
 			B.AddOre(OreAt.X, OreAt.Y, 3.5, 9, false);
 
-			const FCmdFactionDef* Faction = Data ? Data->GetFaction(FName(*FactionFor(i))) : nullptr;
+			const FCmdFactionDef* Faction = Data ? Data->GetFaction(Config.Slots[i].Faction) : nullptr;
 			B.AddEntity(Faction ? Faction->MCV.ToString() : TEXT("mcv"), i, P.X + 1, P.Y + 1);
 			if (Faction)
 			{
@@ -243,7 +285,7 @@ namespace CmdMapGenerator
 		B.Scatter(B.Rocks, Area / 500, 4, 14);
 		B.Scatter(B.Trees, Area / 220, 5, 18);
 
-		return B.Finish(ThemeName(S.Theme));
+		return B.Finish(ThemeName(Config.Theme));
 	}
 
 	TSharedPtr<FJsonObject> GenerateMenuBattle(int32 Seed)

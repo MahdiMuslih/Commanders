@@ -27,6 +27,7 @@ The whole game is **code- and data-driven**. Every unit, building, explosion, so
 | **Campaign** | 12 story missions (6 per side) with briefings, objectives, triggers, scripted waves, reinforcements, radio dialogue, timers, and intro/outro cinematics. Progress is saved. |
 | **Cinematics** | Real-time cutscenes defined in JSON: dolly and orbit camera shots, letterbox, fades, title cards, subtitles, camera shake, and timeline events that drive live gameplay (spawns, orders, explosions, lighting changes). |
 | **Skirmish** | Procedural maps: 1–3 AI opponents, 3 difficulties, 3 map sizes, 4 theatres (temperate, winter, desert, dusk) and a choice of starting credits. |
+| **Multiplayer** | Networked skirmish for up to 4 players plus AI over LAN or direct IP. Includes a lobby (factions, teams, ready-up, host match settings), chat, a spectator view after elimination, AI takeover when a player disconnects, and rematches. It is server-authoritative, and the map is generated deterministically on every machine. See [Docs/Multiplayer.md](Docs/Multiplayer.md). |
 | **Audio** | About 40 synthesised effects (gunfire, cannons, rockets, flame, arc bolts, explosions, collapses, UI and announcer chimes) with camera-relative panning. A live procedural soundtrack follows the game: a brooding menu theme, briefing tension, and an industrial battle march whose drums and lead grow with nearby combat, plus victory and defeat stings. Volume controls are in the menus; `M` mutes the music. Any sound or music mood can be swapped for real assets via `Audio.json`. |
 | **Front end** | Main menu over a live AI-vs-AI battle, campaign and mission select, skirmish setup, how-to-play, briefing screen with a recon map, pause menu, results with stats, and campaign epilogues. |
 
@@ -68,6 +69,7 @@ No level setup is needed. `GameDefaultMap` points at the engine's empty `/Engine
 | `X` / `R` | Sell / Repair mode |
 | `O` / `F1` / `Esc` | Objectives / Help overlay / Pause |
 | `M` | Mute / unmute music |
+| `Enter` (multiplayer) | Chat |
 | Sidebar | Left = build / place when READY, right = hold, then cancel. Shift-click queues 5. |
 | Production building + right click on ground | Set rally point (right-click the building itself to make it primary) |
 | `Space` / `Esc` during cutscenes | Skip |
@@ -97,8 +99,9 @@ Source/Commanders/
   Gameplay/   ACmdEntity (health/weapons/targeting), ACmdUnit (movement, orders,
               harvesting, capture, deploy, aircraft), ACmdBuilding, projectiles,
               effects, spawner
-  Game/       Game mode (session builder), game state (teams, power, production,
-              events), game instance (progress, travel), save game
+  Game/       Game mode (session builder, multiplayer lobby), game state (teams,
+              power, production, events, replication), player state (lobby seat),
+              game instance (progress, travel, host/join), save game
   Mission/    Mission director (objectives/triggers/actions/dialogue/timers),
               cinematic director
   AI/         UCmdAICommander
@@ -111,6 +114,7 @@ Docs/
   DesignDoc.md    factions, units, economy and balance reference
   Scripting.md    mission/cinematic JSON reference for designers
   Audio.md        how the procedural audio works, sound ids, overrides
+  Multiplayer.md  hosting, joining, lobby and how replication works
 Tools/validate_data.py      validates all data without launching Unreal
 ```
 
@@ -134,5 +138,5 @@ Real audio works the same way. `Content/Data/Audio.json` maps any sound id or mu
 
 ## Status & honest limitations
 * This repository was written without access to an Unreal Editor or compiler in the authoring environment. The code targets UE 5.4 APIs and was carefully cross-checked, but expect to fix a few compile errors on your first build.
-* Single player only. The simulation is not replicated.
+* Multiplayer covers skirmish only (LAN / direct IP, no matchmaking). The campaign is single player.
 * Visuals are deliberately procedural placeholders. They are readable and team-coloured, but they are not final art.

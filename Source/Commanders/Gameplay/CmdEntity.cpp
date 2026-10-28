@@ -8,10 +8,19 @@
 #include "World/CmdVisualSubsystem.h"
 #include "Components/StaticMeshComponent.h"
 #include "Engine/World.h"
+#include "Net/UnrealNetwork.h"
 
 ACmdEntity::ACmdEntity()
 {
 	PrimaryActorTick.bCanEverTick = true;
+
+	// The server simulates; clients receive identity, health and a smoothed transform.
+	// Every entity is always relevant: the shroud, not distance, decides what a player sees.
+	bReplicates = true;
+	bAlwaysRelevant = true;
+	SetReplicatingMovement(false);
+	NetUpdateFrequency = 10.f;
+	MinNetUpdateFrequency = 2.f;
 
 	Root = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
 	RootComponent = Root;
@@ -27,17 +36,103 @@ void ACmdEntity::Setup(FName InDefId, int32 InTeamId)
 {
 	DefId = InDefId;
 	TeamId = InTeamId;
+	ResolveDefinition();
+	Health = GetMaxHealth();
+}
+
+void ACmdEntity::ResolveDefinition()
+{
 	if (const UCmdDataRegistry* Data = UCmdDataRegistry::Get(this))
 	{
 		Def = Data->GetEntity(DefId);
 		Weapon = Def ? Data->GetWeapon(Def->Weapon) : nullptr;
 	}
-	Health = GetMaxHealth();
 	bHasTurret = Def && Def->HasTurret();
+}
+
+void ACmdEntity::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(ACmdEntity, DefId);
+	DOREPLIFETIME(ACmdEntity, TeamId);
+	DOREPLIFETIME(ACmdEntity, MissionTag);
+	DOREPLIFETIME(ACmdEntity, Health);
+	DOREPLIFETIME(ACmdEntity, bInvulnerable);
+	DOREPLIFETIME(ACmdEntity, Kills);
+	DOREPLIFETIME(ACmdEntity, NetLocation);
+	DOREPLIFETIME(ACmdEntity, NetYaw);
+	DOREPLIFETIME(ACmdEntity, NetTurretYaw);
+}
+
+void ACmdEntity::RefreshTeamColor()
+{
+	UCmdVisualSubsystem* Visuals = UCmdVisualSubsystem::Get(this);
+	if (Visuals && Def)
+	{
+		Visuals->RecolorParts(PartComponents, Def->Parts, GetTeamColor());
+	}
+}
+
+void ACmdEntity::OnRep_TeamId(int32 OldTeamId)
+{
+	// Captured on the server. The initial value arrives before BeginPlay and needs no handling.
+	if (!HasActorBegunPlay() || OldTeamId == TeamId)
+	{
+		return;
+	}
+	RefreshTeamColor();
+	if (ACmdGameState* GS = GetCmdGameState())
+	{
+		GS->OnEntityChangedTeam(this, OldTeamId);
+	}
+}
+
+void ACmdEntity::PublishNetTransform()
+{
+	if (GetNetMode() == NM_Standalone)
+	{
+		return;
+	}
+	NetLocation = GetActorLocation();
+	NetYaw = FRotator::CompressAxisToShort(GetActorRotation().Yaw);
+	NetTurretYaw = FRotator::CompressAxisToShort(TurretYaw);
+}
+
+void ACmdEntity::TickNetSmoothing(float DeltaSeconds)
+{
+	const FVector Current = GetActorLocation();
+	const FVector Desired = NetLocation;
+	if (!IsBuilding())
+	{
+		if (FVector::DistSquared(Current, Desired) > FMath::Square(8.f * CmdConst::CellSize))
+		{
+			SetActorLocation(Desired);	// teleported (or first update after a hitch)
+		}
+		else
+		{
+			SetActorLocation(FMath::VInterpTo(Current, Desired, DeltaSeconds, 10.f));
+		}
+		const FRotator DesiredRot(0.f, FRotator::DecompressAxisFromShort(NetYaw), 0.f);
+		SetActorRotation(FMath::RInterpTo(GetActorRotation(), DesiredRot, DeltaSeconds, 10.f));
+	}
+	if (bHasTurret)
+	{
+		const float DesiredTurret = FRotator::NormalizeAxis(FRotator::DecompressAxisFromShort(NetTurretYaw));
+		TurretYaw = FRotator::NormalizeAxis(TurretYaw + FRotator::NormalizeAxis(DesiredTurret - TurretYaw) * FMath::Min(1.f, DeltaSeconds * 10.f));
+		Turret->SetRelativeRotation(FRotator(0.f, TurretYaw, 0.f));
+	}
 }
 
 void ACmdEntity::BeginPlay()
 {
+	if (!Def && !DefId.IsNone())
+	{
+		ResolveDefinition();	// replicated in on a client
+	}
+	if (HasAuthority())
+	{
+		PublishNetTransform();
+	}
 	Super::BeginPlay();
 	BuildVisuals();
 	AcquireTimer = FMath::FRand() * 0.5f;
@@ -63,7 +158,15 @@ void ACmdEntity::Tick(float DeltaSeconds)
 	{
 		return;
 	}
-	TickWeapon(DeltaSeconds);
+	if (HasAuthority())
+	{
+		TickWeapon(DeltaSeconds);
+		PublishNetTransform();
+	}
+	else
+	{
+		TickNetSmoothing(DeltaSeconds);
+	}
 
 	for (const TPair<UStaticMeshComponent*, float>& Spinner : Spinners)
 	{
@@ -216,20 +319,21 @@ void ACmdEntity::Die(ACmdEntity* Killer)
 
 	const float Size = IsInfantry() ? 0.5f : (IsBuilding() ? 2.5f : 1.3f);
 	ACmdEffect::SpawnExplosion(GetWorld(), GetActorLocation() + FVector(0.f, 0.f, 40.f), Size, !IsInfantry());
-	if (IsInfantry())
+	ACmdGameState* GS = GetCmdGameState();
+	if (GS && IsInfantry())
 	{
-		UCmdAudioSubsystem::PlayAt(this, TEXT("death"), GetActorLocation());
+		GS->BroadcastSound(TEXT("death"), GetActorLocation());
 	}
-	else if (IsBuilding())
+	else if (GS && IsBuilding())
 	{
-		UCmdAudioSubsystem::PlayAt(this, TEXT("collapse"), GetActorLocation());
+		GS->BroadcastSound(TEXT("collapse"), GetActorLocation());
 	}
 
 	if (Killer && Killer != this)
 	{
 		++Killer->Kills;
 	}
-	if (ACmdGameState* GS = GetCmdGameState())
+	if (GS)
 	{
 		GS->OnEntityKilled(this, Killer);
 	}
@@ -434,20 +538,20 @@ void ACmdEntity::FireAt(ACmdEntity* At)
 	}
 	WeaponCooldown = Weapon->Cooldown * FMath::FRandRange(0.95f, 1.05f);
 	const FVector Muzzle = GetMuzzleLocation();
-	UCmdAudioSubsystem::PlayWeapon(this, *Weapon, Muzzle);
 
-	if (Weapon->MuzzleFlash > 0.f)
+	// Sound, muzzle flash, beams and (on clients) look-alike projectiles: one broadcast per volley.
+	// In single player the multicast simply runs locally.
+	if (ACmdGameState* GS = GetCmdGameState())
 	{
-		ACmdEffect::SpawnFlash(GetWorld(), Muzzle, Weapon->Color, 0.25f * Weapon->MuzzleFlash);
+		GS->MulticastShot(Weapon->Id, Muzzle, At, At->GetAimPoint());
 	}
 
 	for (int32 i = 0; i < Weapon->Burst; ++i)
 	{
 		if (Weapon->ProjectileSpeed <= 0.f)
 		{
-			// Instant beam weapons (arc towers, shock troopers).
-			ACmdEffect::SpawnBeam(GetWorld(), Muzzle, At->GetAimPoint(), Weapon->Color);
-			ACmdProjectile::ApplyImpact(GetWorld(), this, TeamId, *Weapon, At, At->GetAimPoint());
+			// Instant beam weapons (arc towers, shock troopers). The beam itself was drawn by the broadcast.
+			ACmdProjectile::ApplyImpact(GetWorld(), this, TeamId, *Weapon, At, At->GetAimPoint(), false);
 		}
 		else
 		{

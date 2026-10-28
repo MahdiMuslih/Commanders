@@ -24,10 +24,18 @@ public:
 	virtual FVector GetAimPoint() const override;
 	virtual void SetTeam(int32 NewTeam) override;
 	virtual void Die(ACmdEntity* Killer) override;
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
+	UPROPERTY(Replicated)
 	FIntPoint Origin = FIntPoint::ZeroValue;
+
+	UPROPERTY(Replicated)
 	FIntPoint RallyCell = FIntPoint(-1, -1);
+
+	UPROPERTY(Replicated)
 	bool bPrimary = false;
+
+	UPROPERTY(Replicated)
 	bool bRepairing = false;
 
 	bool IsPowered() const;
@@ -49,7 +57,9 @@ private:
 	void TickRepair(float DeltaSeconds);
 	void TickDamageSmoke(float DeltaSeconds);
 
+	UPROPERTY(Replicated)
 	float BuildProgress = 1.f;
+
 	float SmokeTimer = 0.f;
 	float RepairTimer = 0.f;
 	float IncomeTimer = 0.f;
