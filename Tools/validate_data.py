@@ -8,11 +8,14 @@ script triggers/actions/conditions, objective ids, tags and cinematics.
 
 Usage:  python3 Tools/validate_data.py            (exit code 1 on errors)
 """
+import glob
 import json
 import os
+import re
 import sys
 
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "Content", "Data")
+SOURCE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "Source", "Commanders")
 
 ACTION_TYPES = {
     "dialogue", "message", "spawn", "order", "reveal", "camera", "cinematic", "objective_add",
@@ -133,6 +136,8 @@ def main():
                     err(m["file"], f"id mismatch ({mission.get('id')} vs {m['id']})")
                 check_mission(m["file"], mission, ents)
 
+    check_audio(weapons)
+
     for w in warnings:
         print("WARNING", w)
     for e in errors:
@@ -141,6 +146,70 @@ def main():
     print(f"\n{len(ents)} entities, {len(weapon_ids)} weapons, {total_missions} missions checked: "
           f"{len(errors)} error(s), {len(warnings)} warning(s)")
     return 1 if errors else 0
+
+
+def sound_bank():
+    """Sound ids defined by the procedural synth (Bank.Add(TEXT("id"), ...))."""
+    path = os.path.join(SOURCE, "Audio", "CmdSynth.cpp")
+    try:
+        with open(path, encoding="utf-8") as f:
+            return set(re.findall(r'Bank\.Add\(TEXT\("(\w+)"\)', f.read()))
+    except OSError:
+        return set()
+
+
+def check_audio(weapons):
+    bank = sound_bank()
+    if not bank:
+        warn("Audio", "could not read the sound bank from CmdSynth.cpp")
+        return
+    for w in weapons.get("weapons", []):
+        if w.get("sound") and w["sound"] not in bank:
+            err(f"weapon {w['id']}", f"unknown sound '{w['sound']}'")
+    audio = load("Audio.json") or {}
+    for sound in audio.get("gain", {}):
+        if sound not in bank:
+            err("Audio.json", f"gain for unknown sound '{sound}'")
+    for sound in audio.get("sfx_assets", {}):
+        if sound not in bank:
+            err("Audio.json", f"asset override for unknown sound '{sound}'")
+    for mood in audio.get("music_assets", {}):
+        if mood not in ("menu", "tension", "battle", "victory", "defeat"):
+            err("Audio.json", f"unknown music mood '{mood}'")
+    # Every sound id the C++ plays by name must exist in the bank:
+    # the second argument of Play2D/PlayAt, and the fourth (sound) argument of AddMessage.
+    for path in glob.glob(os.path.join(SOURCE, "**", "*.cpp"), recursive=True):
+        with open(path, encoding="utf-8") as f:
+            text = f.read()
+        for call in re.finditer(r'\b(Play2D|PlayAt|AddMessage)\(', text):
+            args = split_args(text, call.end())
+            index = 3 if call.group(1) == "AddMessage" else 1
+            if len(args) > index:
+                for sound in re.findall(r'TEXT\("(\w+)"\)', args[index]):
+                    if sound not in bank:
+                        err(os.path.relpath(path, SOURCE), f"plays unknown sound '{sound}'")
+
+
+def split_args(text, start):
+    """Top-level comma-separated arguments of the call whose '(' ends at start."""
+    args, depth, current, quote = [], 0, "", False
+    for ch in text[start:]:
+        if ch == '"':
+            quote = not quote
+        elif not quote:
+            if ch in "([{":
+                depth += 1
+            elif ch in ")]}":
+                if depth == 0:
+                    args.append(current)
+                    return args
+                depth -= 1
+            elif ch == "," and depth == 0:
+                args.append(current)
+                current = ""
+                continue
+        current += ch
+    return args
 
 
 def check_mission(where, m, ents):

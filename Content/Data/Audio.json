@@ -1,0 +1,34 @@
+{
+	"_comment": [
+		"Mix levels and optional asset overrides for the procedural audio (see Docs/Audio.md).",
+		"gain: per-sound volume multiplier for the synthesised bank.",
+		"sfx_assets: replace a synthesised sound with an imported asset, e.g. \"explode_large\": \"/Game/Audio/SFX_BigBoom.SFX_BigBoom\".",
+		"music_assets: replace a procedural music mood (menu, tension, battle, victory, defeat) with an imported track."
+	],
+	"gain": {
+		"gun_mg": 0.55,
+		"gun_chain": 0.5,
+		"gun_rifle": 0.6,
+		"gun_pistol": 0.55,
+		"gun_sniper": 0.8,
+		"cannon": 0.75,
+		"cannon_heavy": 0.85,
+		"flame": 0.6,
+		"flak": 0.6,
+		"zap": 0.75,
+		"aurora": 1.0,
+		"explode_small": 0.75,
+		"explode_medium": 0.85,
+		"explode_large": 1.0,
+		"collapse": 1.0,
+		"death": 0.5,
+		"message": 0.6,
+		"queue": 0.6,
+		"click": 0.7,
+		"radio": 0.7,
+		"alarm": 0.8,
+		"low_power": 0.8
+	},
+	"sfx_assets": {},
+	"music_assets": {}
+}

@@ -1,4 +1,5 @@
 #include "Gameplay/CmdEffect.h"
+#include "Audio/CmdAudioSubsystem.h"
 #include "World/CmdVisualSubsystem.h"
 #include "Components/PointLightComponent.h"
 #include "Components/StaticMeshComponent.h"
@@ -46,6 +47,10 @@ ACmdEffect* ACmdEffect::SpawnBase(UWorld* World, const FVector& Location, EKind 
 void ACmdEffect::SpawnExplosion(UWorld* World, const FVector& Location, float InSize, bool bWithDebris)
 {
 	UCmdVisualSubsystem* Visuals = UCmdVisualSubsystem::Get(World);
+	if (InSize >= 0.9f)
+	{
+		UCmdAudioSubsystem::PlayAt(World, InSize < 1.4f ? TEXT("explode_small") : (InSize < 2.2f ? TEXT("explode_medium") : TEXT("explode_large")), Location, FMath::Min(1.f, 0.6f + InSize * 0.2f));
+	}
 	ACmdEffect* E = SpawnBase(World, Location, EKind::Explosion, 0.55f + InSize * 0.15f);
 	if (!E || !Visuals)
 	{

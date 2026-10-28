@@ -91,6 +91,7 @@ private:
 	void IssueMove(const FIntPoint& Cell, bool bAttackMove);
 	void IssueTargetCommand(ACmdEntity* Target, bool bForce);
 	void CleanSelection();
+	void PlaySelectionSound();
 	ACmdHUD* GetCmdHUD() const;
 	bool IsKeyDown(const FKey& Key) const { return IsInputKeyDown(Key); }
 	bool Pressed(const FKey& Key) const { return WasInputKeyJustPressed(Key); }

@@ -1,4 +1,5 @@
 #include "Mission/CmdMissionDirector.h"
+#include "Audio/CmdAudioSubsystem.h"
 #include "Mission/CmdCinematicDirector.h"
 #include "Game/CmdGameState.h"
 #include "Game/CmdGameMode.h"
@@ -336,6 +337,7 @@ void ACmdMissionDirector::TickDialogue(float DeltaSeconds)
 		DialogueQueue.RemoveAt(0);
 		DialogueAge = 0.f;
 		bHasDialogue = true;
+		UCmdAudioSubsystem::Play2D(this, TEXT("radio"));
 	}
 }
 
@@ -431,11 +433,11 @@ void ACmdMissionDirector::SetObjectiveState(FName Id, ECmdObjectiveState State)
 		{
 			if (State == ECmdObjectiveState::Completed)
 			{
-				S->AddMessage(PlayerTeam, FString::Printf(TEXT("Objective complete: %s"), *O->Text), FLinearColor(0.4f, 1.f, 0.4f));
+				S->AddMessage(PlayerTeam, FString::Printf(TEXT("Objective complete: %s"), *O->Text), FLinearColor(0.4f, 1.f, 0.4f), TEXT("objective"));
 			}
 			else if (State == ECmdObjectiveState::Failed)
 			{
-				S->AddMessage(PlayerTeam, FString::Printf(TEXT("Objective failed: %s"), *O->Text), FLinearColor(1.f, 0.3f, 0.3f));
+				S->AddMessage(PlayerTeam, FString::Printf(TEXT("Objective failed: %s"), *O->Text), FLinearColor(1.f, 0.3f, 0.3f), TEXT("objective_failed"));
 			}
 		}
 	}
@@ -956,7 +958,7 @@ void ACmdMissionDirector::ExecuteAction(const TSharedPtr<FJsonObject>& A)
 		IssueOrders(Spawned, A);
 		if (CmdJson::Bool(A, TEXT("notify"), false) && State)
 		{
-			State->AddMessage(PlayerTeam, TEXT("Reinforcements have arrived."), FLinearColor(0.5f, 0.9f, 1.f));
+			State->AddMessage(PlayerTeam, TEXT("Reinforcements have arrived."), FLinearColor(0.5f, 0.9f, 1.f), TEXT("reinforce"));
 		}
 	}
 	else if (Type == TEXT("order"))

@@ -1,4 +1,5 @@
 #include "Game/CmdGameState.h"
+#include "Audio/CmdAudioSubsystem.h"
 #include "Gameplay/CmdEntity.h"
 #include "Gameplay/CmdBuilding.h"
 #include "Gameplay/CmdUnit.h"
@@ -130,7 +131,7 @@ void ACmdGameState::OnEntityDamaged(ACmdEntity* Victim, ACmdEntity* Attacker)
 	if (Now - LastAttackWarning > 20.f)
 	{
 		LastAttackWarning = Now;
-		AddMessage(LocalTeamId, Victim->IsBuilding() ? TEXT("Our base is under attack!") : TEXT("Unit under attack."), FLinearColor(1.f, 0.35f, 0.25f));
+		AddMessage(LocalTeamId, Victim->IsBuilding() ? TEXT("Our base is under attack!") : TEXT("Unit under attack."), FLinearColor(1.f, 0.35f, 0.25f), TEXT("alarm"));
 	}
 }
 
@@ -155,7 +156,7 @@ void ACmdGameState::OnEntityKilled(ACmdEntity* Victim, ACmdEntity* Killer)
 	{
 		if (Victim->IsBuilding())
 		{
-			AddMessage(LocalTeamId, FString::Printf(TEXT("Structure lost: %s"), Victim->Def ? *Victim->Def->Name : TEXT("")), FLinearColor(1.f, 0.4f, 0.3f));
+			AddMessage(LocalTeamId, FString::Printf(TEXT("Structure lost: %s"), Victim->Def ? *Victim->Def->Name : TEXT("")), FLinearColor(1.f, 0.4f, 0.3f), TEXT("objective_failed"));
 		}
 	}
 	if (MissionDirector)
@@ -444,7 +445,7 @@ bool ACmdGameState::QueueProduction(int32 TeamId, FName DefId, bool bNotify)
 	{
 		if (Q.Items.Num() > 0)
 		{
-			if (bNotify) AddMessage(TeamId, TEXT("Unable to comply, building in progress."));
+			if (bNotify) AddMessage(TeamId, TEXT("Unable to comply, building in progress."), FLinearColor(0.9f, 0.9f, 0.6f), TEXT("deny"));
 			return false;
 		}
 	}
@@ -462,11 +463,11 @@ bool ACmdGameState::QueueProduction(int32 TeamId, FName DefId, bool bNotify)
 	Q.Items.Add(DefId);
 	if (bNotify && Def->bIsBuilding)
 	{
-		AddMessage(TeamId, TEXT("Building."));
+		AddMessage(TeamId, TEXT("Building."), FLinearColor(0.9f, 0.9f, 0.6f), TEXT("queue"));
 	}
 	else if (bNotify && Q.Items.Num() == 1)
 	{
-		AddMessage(TeamId, TEXT("Training."));
+		AddMessage(TeamId, TEXT("Training."), FLinearColor(0.9f, 0.9f, 0.6f), TEXT("queue"));
 	}
 	return true;
 }
@@ -492,7 +493,7 @@ void ACmdGameState::CancelProduction(int32 TeamId, FName DefId)
 		if (!Q.bOnHold && !Q.bReady && Q.Spent > 0.f && Q.Items.Num() == 1)
 		{
 			Q.bOnHold = true;
-			AddMessage(TeamId, TEXT("On hold."));
+			AddMessage(TeamId, TEXT("On hold."), FLinearColor(0.9f, 0.9f, 0.6f), TEXT("click"));
 			return;
 		}
 		T->Credits += Q.Spent;
@@ -503,7 +504,7 @@ void ACmdGameState::CancelProduction(int32 TeamId, FName DefId)
 		Q.bOnHold = false;
 	}
 	Q.Items.RemoveAt(LastIndex);
-	AddMessage(TeamId, TEXT("Cancelled."));
+	AddMessage(TeamId, TEXT("Cancelled."), FLinearColor(0.9f, 0.9f, 0.6f), TEXT("click"));
 }
 
 void ACmdGameState::ToggleHold(int32 TeamId, ECmdCategory Category)
@@ -628,7 +629,7 @@ void ACmdGameState::FinishProduction(FCmdTeam& Team, ECmdCategory Category)
 	{
 		Q.bReady = true;
 		Q.Progress = 1.f;
-		AddMessage(Team.Id, TEXT("Construction complete."), FLinearColor(0.5f, 1.f, 0.5f));
+		AddMessage(Team.Id, TEXT("Construction complete."), FLinearColor(0.5f, 1.f, 0.5f), TEXT("build_complete"));
 		return;
 	}
 	Q.Items.RemoveAt(0);
@@ -636,7 +637,7 @@ void ACmdGameState::FinishProduction(FCmdTeam& Team, ECmdCategory Category)
 	Q.Spent = 0.f;
 	SpawnProducedUnit(Team.Id, *Def);
 	++Team.Stats.UnitsBuilt;
-	AddMessage(Team.Id, TEXT("Unit ready."), FLinearColor(0.5f, 1.f, 0.5f));
+	AddMessage(Team.Id, TEXT("Unit ready."), FLinearColor(0.5f, 1.f, 0.5f), TEXT("unit_ready"));
 }
 
 void ACmdGameState::SpawnProducedUnit(int32 TeamId, const FCmdEntityDef& Def)
@@ -707,12 +708,13 @@ void ACmdGameState::RecalculatePower()
 // Messages
 // ---------------------------------------------------------------------------
 
-void ACmdGameState::AddMessage(int32 TeamId, const FString& Text, const FLinearColor& Color)
+void ACmdGameState::AddMessage(int32 TeamId, const FString& Text, const FLinearColor& Color, FName Sound)
 {
 	if (TeamId != LocalTeamId && TeamId != INDEX_NONE)
 	{
 		return;
 	}
+	UCmdAudioSubsystem::Play2D(this, Sound);
 	// Collapse duplicates.
 	if (Messages.Num() > 0 && Messages.Last().Text == Text)
 	{
@@ -761,7 +763,7 @@ void ACmdGameState::Tick(float DeltaSeconds)
 		{
 			if (Local->HasLowPower() && !bLowPowerWarned && Flow == ECmdFlowState::Playing)
 			{
-				AddMessage(LocalTeamId, TEXT("Low power."), FLinearColor(1.f, 0.6f, 0.2f));
+				AddMessage(LocalTeamId, TEXT("Low power."), FLinearColor(1.f, 0.6f, 0.2f), TEXT("low_power"));
 			}
 			bLowPowerWarned = Local->HasLowPower();
 		}
@@ -834,7 +836,7 @@ void ACmdGameState::CheckDefeat()
 			T.bDefeated = true;
 			if (T.Id != LocalTeamId && Flow == ECmdFlowState::Playing)
 			{
-				AddMessage(LocalTeamId, FString::Printf(TEXT("%s has been eliminated."), *T.Name), FLinearColor(0.6f, 0.9f, 1.f));
+				AddMessage(LocalTeamId, FString::Printf(TEXT("%s has been eliminated."), *T.Name), FLinearColor(0.6f, 0.9f, 1.f), TEXT("objective"));
 			}
 			if (MissionDirector)
 			{

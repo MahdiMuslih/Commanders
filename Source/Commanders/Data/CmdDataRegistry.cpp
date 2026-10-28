@@ -124,6 +124,7 @@ void UCmdDataRegistry::LoadWeapons()
 		W.Color = CmdJson::Color(J, TEXT("color"), W.Color);
 		W.ProjectileScale = CmdJson::Num(J, TEXT("size"), W.ProjectileScale);
 		W.MuzzleFlash = CmdJson::Num(J, TEXT("flash"), W.MuzzleFlash);
+		W.Sound = CmdJson::Name(J, TEXT("sound"));
 		if (!W.Id.IsNone())
 		{
 			Weapons.Add(W.Id, MoveTemp(W));

@@ -22,7 +22,9 @@ public class Commanders : ModuleRules
 		{
 			"Slate",
 			"SlateCore",
-			"RenderCore"
+			"RenderCore",
+			"AudioMixer",
+			"AudioExtensions"
 		});
 	}
 }

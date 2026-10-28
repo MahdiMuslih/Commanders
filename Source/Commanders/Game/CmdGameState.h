@@ -133,7 +133,8 @@ public:
 
 	// Messages (EVA style notifications) -----------------------------------
 	TArray<FCmdMessage> Messages;
-	void AddMessage(int32 TeamId, const FString& Text, const FLinearColor& Color = FLinearColor(0.9f, 0.9f, 0.6f));
+	/** Shows an announcer message to the local player and plays a sound (defaults to a soft blip). */
+	void AddMessage(int32 TeamId, const FString& Text, const FLinearColor& Color = FLinearColor(0.9f, 0.9f, 0.6f), FName Sound = TEXT("message"));
 
 	// Flow -------------------------------------------------------------------
 	ECmdFlowState Flow = ECmdFlowState::None;

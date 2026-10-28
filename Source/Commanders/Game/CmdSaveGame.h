@@ -26,4 +26,10 @@ public:
 
 	UPROPERTY()
 	float EdgeScrollSpeed = 1.f;
+
+	UPROPERTY()
+	float MusicVolume = 0.6f;
+
+	UPROPERTY()
+	float SfxVolume = 0.85f;
 };

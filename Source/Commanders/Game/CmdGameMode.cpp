@@ -1,4 +1,5 @@
 #include "Game/CmdGameMode.h"
+#include "Audio/CmdAudioSubsystem.h"
 #include "Game/CmdGameState.h"
 #include "Game/CmdGameInstance.h"
 #include "Player/CmdPlayerController.h"
@@ -33,6 +34,10 @@ void ACmdGameMode::StartPlay()
 	// Let the engine dispatch BeginPlay first, so every entity we spawn below
 	// begins play immediately (and registers with the grid / game state).
 	Super::StartPlay();
+	if (UCmdAudioSubsystem* Audio = UCmdAudioSubsystem::Get(this))
+	{
+		Audio->EnsureForWorld(GetWorld());
+	}
 
 	UCmdGameInstance* GI = Cast<UCmdGameInstance>(GetGameInstance());
 	const UCmdDataRegistry* Data = UCmdDataRegistry::Get(this);

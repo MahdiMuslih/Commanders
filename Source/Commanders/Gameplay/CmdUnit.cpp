@@ -1,4 +1,5 @@
 #include "Gameplay/CmdUnit.h"
+#include "Audio/CmdAudioSubsystem.h"
 #include "Gameplay/CmdBuilding.h"
 #include "Gameplay/CmdSpawner.h"
 #include "Gameplay/CmdEffect.h"
@@ -176,7 +177,7 @@ bool ACmdUnit::TryDeploy()
 	{
 		if (ACmdGameState* GS = GetCmdGameState())
 		{
-			GS->AddMessage(TeamId, TEXT("Cannot deploy here."), FLinearColor(1.f, 0.4f, 0.3f));
+			GS->AddMessage(TeamId, TEXT("Cannot deploy here."), FLinearColor(1.f, 0.4f, 0.3f), TEXT("deny"));
 		}
 		return false;
 	}
@@ -187,6 +188,7 @@ bool ACmdUnit::TryDeploy()
 	const int32 Team = TeamId;
 	UWorld* World = GetWorld();
 
+	UCmdAudioSubsystem::PlayAt(this, TEXT("deploy"), GetActorLocation());
 	bDead = true;	// leave quietly, the building takes over
 	if (ACmdGameState* GS = GetCmdGameState())
 	{
@@ -416,12 +418,12 @@ void ACmdUnit::TickOrder(float DeltaSeconds)
 			if (B->TeamId == TeamId)
 			{
 				B->Heal(B->GetMaxHealth());
-				if (GS) GS->AddMessage(TeamId, FString::Printf(TEXT("%s repaired."), *B->Def->Name));
+				if (GS) GS->AddMessage(TeamId, FString::Printf(TEXT("%s repaired."), *B->Def->Name), FLinearColor(0.9f, 0.9f, 0.6f), TEXT("build_complete"));
 			}
 			else if (B->Def && B->Def->bCapturable)
 			{
-				if (GS) GS->AddMessage(TeamId, FString::Printf(TEXT("%s captured."), *B->Def->Name), FLinearColor(0.4f, 1.f, 0.4f));
-				if (GS) GS->AddMessage(B->TeamId, FString::Printf(TEXT("%s has been captured!"), *B->Def->Name), FLinearColor(1.f, 0.3f, 0.2f));
+				if (GS) GS->AddMessage(TeamId, FString::Printf(TEXT("%s captured."), *B->Def->Name), FLinearColor(0.4f, 1.f, 0.4f), TEXT("capture"));
+				if (GS) GS->AddMessage(B->TeamId, FString::Printf(TEXT("%s has been captured!"), *B->Def->Name), FLinearColor(1.f, 0.3f, 0.2f), TEXT("alarm"));
 				B->SetTeam(TeamId);
 			}
 			bDead = true;
